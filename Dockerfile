@@ -11,4 +11,6 @@ RUN chmod a+x /usr/local/bin/kubectl
 RUN chmod a+x /usr/local/bin/main.py
 RUN chmod a+x /usr/local/bin/entrypoint.sh
 
+RUN pip install -r /usr/local/bin/requirements.txt
+
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

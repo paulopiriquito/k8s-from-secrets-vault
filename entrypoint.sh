@@ -6,6 +6,6 @@ set -e
 mkdir -p ~/.kube
 echo $INPUT_KUBECONFIG | base64 -d > ~/.kube/config
 
-pip install -r ./requirements.txt
+echo 'current kubectl context: '
 
 python -u ./main.py
