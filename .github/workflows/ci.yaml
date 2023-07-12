@@ -36,6 +36,18 @@ jobs:
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v3
+      - name: Install kind
+        uses: engineerd/setup-kind@v0.5.0
+      - name: Export kubeconfig
+        run: |
+          kubectl cluster-info
+          kubectl get pods -n kube-system
+          echo "current-context:" $(kubectl config current-context)
+          echo "environment-kubeconfig:" ${KUBECONFIG}
+      - uses: innovationnorway/setup-vault@v1
+        with:
+          version: '~1.4'
+      - run: vault version
       - name: Run test action
         uses: ./test/
         with:
