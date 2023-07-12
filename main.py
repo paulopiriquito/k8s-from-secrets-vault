@@ -1,3 +1,4 @@
+import os
 import sys
 import json
 import requests
@@ -66,15 +67,15 @@ def base64encode_collection(collection: dict):
 
 # main entrypoint
 
-i_kubeconfig = sys.argv[1]
-i_namespace = sys.argv[2]
-i_resource_name = sys.argv[3]
-i_resource_type = sys.argv[4]
+i_kubeconfig = os.getenv('INPUT_KUBECONFIG')
+i_namespace = os.getenv('INPUT_NAMESPACE')
+i_resource_name = os.getenv('INPUT_RESOURCE-NAME')
+i_resource_type = os.getenv('INPUT_RESOURCE-TYPE')
 
-i_vault = sys.argv[5]
-i_engine = sys.argv[6]
-i_secret = sys.argv[7]
-i_token = sys.argv[8]
+i_vault = os.getenv('INPUT_VAULT-URL')
+i_engine = os.getenv('INPUT_ENGINE-NAME')
+i_secret = os.getenv('INPUT_SECRET-NAME')
+i_token = os.getenv('INPUT_VAULT-AUTH-TOKEN')
 
 try:
     debug = sys.argv[5]
