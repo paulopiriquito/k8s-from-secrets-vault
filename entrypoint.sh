@@ -8,4 +8,4 @@ echo $INPUT_KUBECONFIG | base64 -d > ~/.kube/config
 
 echo 'current kubectl context: '
 
-python -u ./main.py
+python -u /usr/local/bin/main.py
