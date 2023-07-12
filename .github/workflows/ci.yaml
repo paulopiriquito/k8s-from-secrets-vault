@@ -39,7 +39,6 @@ jobs:
       - name: Run test action
         uses: ./test/
         with:
-          branch: 'develop'
           kubeconfig: ''
           namespace: ''
           resource-name: ''
