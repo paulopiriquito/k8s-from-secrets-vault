@@ -1,0 +1,40 @@
+# action.yml
+name: 'Configmap and secrets from HashiCorp Vault'
+description: 'Produce K8s secrets and config-map from HashiCorp secret vault path'
+branding:
+  icon: anchor
+  color: blue
+inputs:
+  kubeconfig:
+    description: 'Kubeconfig as base64 string to connect to cluster'
+  namespace:
+    description: 'Cluster namespace to apply resource'
+    required: true
+    default: 'default'
+  resource-name:
+    description: 'Name of the k8s resource to create'
+  resource-type:
+    description: 'K8s resource type (config-map or secret)'
+    required: true
+    default: 'secret'
+  vault-url:
+    description: 'Base url to vault, without /vX (version) part'
+    required: true
+  engine-name:
+    description: 'Name of secret engine'
+    required: true
+  secret-name:
+    description: 'Name of secrets entry'
+    required: true
+  vault-auth-token:
+    description: 'Access token to vault'
+    required: true
+
+  debug:
+    description: 'Output secret key names, and yaml output with hidden values'
+    required: false
+runs:
+  using: 'composite'
+  steps:
+    - run: python $GITHUB_ACTION_PATH/main.py ${{ inputs.kubeconfig }} ${{ inputs.namespace }} ${{ inputs.resource-name }} ${{ inputs.resource-type }} ${{ inputs.vault-url }} ${{ inputs.engine-name }} ${{ inputs.secret-name }} ${{ inputs.vault-auth-token }}
+      shell: bash
