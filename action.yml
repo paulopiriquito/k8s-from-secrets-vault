@@ -36,7 +36,7 @@ inputs:
     required: false
 runs:
   using: 'docker'
-  image: 'Dockerfile'
+  image: 'piriquito/k8s-from-secrets-vault:latest'
   args:
     - ${{ inputs.kubeconfig }}
     - ${{ inputs.namespace }}
