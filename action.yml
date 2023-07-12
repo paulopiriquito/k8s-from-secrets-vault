@@ -33,8 +33,7 @@ inputs:
   debug:
     description: 'Output secret key names, and yaml output with hidden values'
     required: false
+
 runs:
-  using: 'composite'
-  steps:
-    - run: python $GITHUB_ACTION_PATH/main.py ${{ inputs.kubeconfig }} ${{ inputs.namespace }} ${{ inputs.resource-name }} ${{ inputs.resource-type }} ${{ inputs.vault-url }} ${{ inputs.engine-name }} ${{ inputs.secret-name }} ${{ inputs.vault-auth-token }}
-      shell: bash
+  using: 'docker'
+  image: 'Dockerfile'

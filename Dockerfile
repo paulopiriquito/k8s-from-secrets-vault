@@ -1,10 +1,14 @@
-FROM python:3.10.7-slim
+FROM python:3.10.7-alpine
 
-WORKDIR /app
+COPY main.py /usr/local/bin/main.py
+COPY requirements.txt /usr/local/bin/requirements.txt
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 
-COPY main.py ./main.py
-COPY requirements.txt ./requirements.txt
+RUN apk --update add curl gettext
+RUN curl -L -o /usr/local/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
 
-RUN pip install -r requirements.txt
+RUN chmod a+x /usr/local/bin/kubectl
+RUN chmod a+x /usr/local/bin/main.py
+RUN chmod a+x /usr/local/bin/entrypoint.sh
 
-ENTRYPOINT [ "python", "-u", "main.py" ]
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

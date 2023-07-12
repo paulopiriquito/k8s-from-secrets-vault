@@ -7,11 +7,11 @@ from kubernetes import client, config
 
 
 def load_kubeconfig(kubeconfig: str):
-    kubeconfig_decoded = base64.b64decode(kubeconfig)
-    with open('~/.kube/config', 'w') as f:
-        f.write(str(kubeconfig_decoded))
+    # kubeconfig_decoded = base64.b64decode(kubeconfig)
+    # with open('./.kube/config', 'w') as f:
+    #     f.write(str(kubeconfig_decoded))
 
-    config.load_kube_config()
+    config.load_kube_config(f"./kube/config")
     k8s_apps_client = client.CoreV1Api()
     return k8s_apps_client
 
