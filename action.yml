@@ -1,6 +1,6 @@
 # action.yml
-name: 'Configmap and secrets from HashiCorp Vault'
-description: 'Produce K8s secrets and config-map from HashiCorp secret vault path'
+name: 'Configmap and Secrets from Hashicorp Vault'
+description: 'Produce K8s secrets or config-maps from Hashicorp secret engine entry'
 branding:
   icon: anchor
   color: blue
@@ -18,7 +18,7 @@ inputs:
     required: true
     default: 'secret'
   vault-url:
-    description: 'Base url to vault, without /vX (version) part'
+    description: 'Base url to vault, without /v1 (version) part'
     required: true
   engine-name:
     description: 'Name of secret engine'
