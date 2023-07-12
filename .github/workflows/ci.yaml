@@ -1,9 +1,10 @@
-name: Build and push to GH
+name: Test Build
 on:
   workflow_dispatch:
   push:
-    tags:
-      - 'v**'
+    branches:
+      - master
+      - develop
 jobs:
   build:
     name: Build
@@ -25,6 +26,25 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: piriquito/k8s-from-secrets-vault:latest
+          tags: piriquito/k8s-from-secrets-vault:develop
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+      - name: Run test action
+        uses: ./test/
+        with:
+          branch: 'develop'
+          kubeconfig: ''
+          namespace: ''
+          resource-name: ''
+          resource-type: ''
+          vault-url: ''
+          engine-name: ''
+          secret-name: ''
+          vault-auth-token: ''
