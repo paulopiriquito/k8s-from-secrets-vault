@@ -4,6 +4,7 @@ description: 'Produce K8s secrets or config-maps from Hashicorp secret engine en
 branding:
   icon: anchor
   color: blue
+author: paulopiriquito
 inputs:
   kubeconfig:
     description: 'Kubeconfig as base64 string to connect to cluster'
@@ -37,3 +38,12 @@ inputs:
 runs:
   using: 'docker'
   image: 'Dockerfile'
+  args:
+    - ${{ inputs.kubeconfig }}
+    - ${{ inputs.namespace }}
+    - ${{ inputs.resource-name }}
+    - ${{ inputs.resource-type }}
+    - ${{ inputs.vault-url }}
+    - ${{ inputs.engine-name }}
+    - ${{ inputs.secret-name }}
+    - ${{ inputs.vault-auth-token }}
