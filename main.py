@@ -69,16 +69,16 @@ def base64encode_collection(collection: dict):
 
 i_kubeconfig = os.getenv('INPUT_KUBECONFIG')
 i_namespace = os.getenv('INPUT_NAMESPACE')
-i_resource_name = os.getenv('INPUT_RESOURCE-NAME')
-i_resource_type = os.getenv('INPUT_RESOURCE-TYPE')
+i_resource_name = os.getenv('INPUT_RESOURCE_NAME')
+i_resource_type = os.getenv('INPUT_RESOURCE_TYPE')
 
-i_vault = os.getenv('INPUT_VAULT-URL')
-i_engine = os.getenv('INPUT_ENGINE-NAME')
-i_secret = os.getenv('INPUT_SECRET-NAME')
-i_token = os.getenv('INPUT_VAULT-AUTH-TOKEN')
+i_vault = os.getenv('INPUT_VAULT_URL')
+i_engine = os.getenv('INPUT_ENGINE_NAME')
+i_secret = os.getenv('INPUT_SECRET_NAME')
+i_token = os.getenv('INPUT_VAULT_AUTH_TOKEN')
 
 try:
-    debug = sys.argv[5]
+    debug = os.getenv('INPUT_DEBUG')
 except:
     debug = 'no'
 
