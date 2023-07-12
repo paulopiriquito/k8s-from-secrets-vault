@@ -34,10 +34,12 @@ inputs:
   debug:
     description: 'Output secret key names, and yaml output with hidden values'
     required: false
-
+  tag:
+    description: 'Image tag version'
+    required: true
 runs:
   using: 'docker'
-  image: 'docker:piriquito/k8s-from-secrets-vault:${{ inputs.branch }}'
+  image: 'docker:piriquito/k8s-from-secrets-vault:${{ inputs.tag }}'
   args:
     - ${{ inputs.kubeconfig }}
     - ${{ inputs.namespace }}
