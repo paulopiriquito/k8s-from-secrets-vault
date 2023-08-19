@@ -35,9 +35,14 @@ inputs:
     description: 'Output secret key names, and yaml output with hidden values'
     required: false
 
+  imagelabel:
+    description: 'Image label to use'
+    required: false
+    default: 'latest'
+
 runs:
   using: 'docker'
-  image: 'docker:piriquito/k8s-from-secrets-vault:latest'
+  image: 'docker:piriquito/k8s-from-secrets-vault:${{ inputs.imagelabel }}'
   args:
     - ${{ inputs.kubeconfig }}
     - ${{ inputs.namespace }}

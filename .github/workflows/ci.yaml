@@ -38,8 +38,9 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v3
       - name: Run test action for configmap
-        uses: ./test/
+        uses: .
         with:
+          imagelabel: 'develop'
           kubeconfig: ${{ secrets.KUBECONFIG }}
           namespace: ${{ vars.NAMESPACE }}
           resource-name: ${{ vars.RESOURCE_NAME }}
@@ -49,8 +50,9 @@ jobs:
           secret-name: ${{ vars.SECRET_NAME }}
           vault-auth-token: '${{ secrets.VAULT_TOKEN }}'
       - name: Run test action for secrets
-        uses: ./test/
+        uses: .
         with:
+          imagelabel: 'develop'
           kubeconfig: ${{ secrets.KUBECONFIG }}
           namespace: ${{ vars.NAMESPACE }}
           resource-name: ${{ vars.RESOURCE_NAME }}
