@@ -22,17 +22,34 @@ jobs:
         id: docker_build
         uses: docker/build-push-action@v2
         with:
-          context: .
-          file: ./Dockerfile
+          context: ./src
+          file: ./docker/Dockerfile
           push: true
           tags: piriquito/k8s-from-secrets-vault:develop
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
   test:
     name: Test
-    environment: dev
     runs-on: ubuntu-latest
     needs: build
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+      - name: Setup Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '1.21'
+      - name: Install dependencies
+        run : go mod download
+        working-directory: ./src
+      - name: Run tests
+        run: go test -v ./... -outputdir ./test-results
+        working-directory: ./src
+  integration-test:
+    name: Integration Test
+    environment: dev
+    runs-on: ubuntu-latest
+    needs: test
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v3
