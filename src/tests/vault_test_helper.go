@@ -39,8 +39,9 @@ func getClientConfigForNewTestVaultWithSecrets(t *testing.T, secretsToWrite map[
 
 func createTestVaultWithSecrets(t *testing.T, vaultConfig vaultclient.VaultConfig, secretPath string, testSecrets map[string]interface{}) (net.Listener, string, string) {
 	t.Helper()
-	vaultCore, keyShares, rootToken := vault.TestCoreUnsealed(t)
-	_ = keyShares
+	cluster := vault.NewTestCluster(t, &vault.CoreConfig{}, &vault.TestClusterOptions{})
+	rootToken := cluster.RootToken
+	vaultCore := cluster.Cores[0].Core
 
 	httpServerListener, serverAddress := http.TestServer(t, vaultCore)
 
