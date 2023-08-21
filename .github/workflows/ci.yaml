@@ -1,10 +1,9 @@
 name: Test Build
 on:
   workflow_dispatch:
-  push:
+  pull_request:
     branches:
       - master
-      - develop
 jobs:
   build:
     name: Build
