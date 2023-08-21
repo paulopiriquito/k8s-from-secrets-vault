@@ -43,8 +43,23 @@ jobs:
         run : go mod download
         working-directory: ./src
       - name: Run tests
-        run: go test -v ./... -outputdir ./test-results
+        run: |
+          go install github.com/jstemmer/go-junit-report/v2@latest
+          go test -v ./... | go-junit-report -set-exit-code > ../test_report.xml
         working-directory: ./src
+      - name: Test Summary
+        uses: test-summary/action@v1
+        with:
+          paths: "**/test_report.xml"
+          output: "./test-summary.md"
+          show: "all"
+        if: always()
+      - name: Comment on pull request
+        uses: mshick/add-pr-comment@v2
+        if: always()
+        continue-on-error: true
+        with:
+          message-path: ./test-summary.md
   integration-test:
     name: Integration Test
     environment: dev
