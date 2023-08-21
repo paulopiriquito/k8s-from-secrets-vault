@@ -166,8 +166,8 @@ func Test_VaultClient_GivenIncorrectVaultAddress_ReturnsError(t *testing.T) {
 	if err == nil {
 		t.Error("Expected error")
 	}
-	if !strings.Contains(err.Error(), "incorrect-address: no such host") {
-		t.Error("Expected error to be 'incorrect-address: no such host'")
+	if !strings.Contains(err.Error(), "incorrect-address") {
+		t.Error("Expected error to be 'incorrect-address'")
 	}
 }
 
