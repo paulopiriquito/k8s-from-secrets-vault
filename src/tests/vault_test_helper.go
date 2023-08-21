@@ -10,6 +10,33 @@ import (
 	"testing"
 )
 
+func getClientConfigForNewTestVaultWithSecrets(t *testing.T, secretsToWrite map[string]interface{}) (vaultclient.VaultConfig, net.Listener) {
+	t.Helper()
+
+	testVaultConfig := vaultclient.VaultConfig{
+		EngineName: "application",
+		SecretPath: "dev/config",
+		Namespace:  "",
+	}
+
+	secretPath := vaultclient.GetSecretPath(testVaultConfig)
+
+	if secretsToWrite == nil {
+		secretsToWrite = map[string]interface{}{}
+	}
+
+	vaultHttpListener, testVaultRootToken, testVaultAddress := createTestVaultWithSecrets(t, testVaultConfig, secretPath, secretsToWrite)
+
+	clientConfig := vaultclient.VaultConfig{}
+	clientConfig.EngineName = testVaultConfig.EngineName
+	clientConfig.Namespace = testVaultConfig.Namespace
+	clientConfig.SecretPath = testVaultConfig.SecretPath
+	clientConfig.Address = testVaultAddress
+	clientConfig.AuthToken = testVaultRootToken
+
+	return clientConfig, vaultHttpListener
+}
+
 func createTestVaultWithSecrets(t *testing.T, vaultConfig vaultclient.VaultConfig, secretPath string, testSecrets map[string]interface{}) (net.Listener, string, string) {
 	t.Helper()
 	vaultCore, keyShares, rootToken := vault.TestCoreUnsealed(t)
