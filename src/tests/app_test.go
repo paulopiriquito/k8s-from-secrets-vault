@@ -1,9 +1,7 @@
 package tests
 
 import (
-	"context"
 	"k8s-from-secrets-vault/app"
-	kubernetes "k8s-from-secrets-vault/kubernetes"
 	vaultclient "k8s-from-secrets-vault/vault"
 	"strings"
 	"testing"
@@ -47,6 +45,7 @@ func Test_Command_GivenIncorrectArgs_CanHandleError(t *testing.T) {
 
 func Test_VaultClient_GivenVaultConfig_CanLoadSecretData(t *testing.T) {
 	//Arrange
+
 	log := setupLogger(t)
 
 	expectedSecretData := map[string]interface{}{
@@ -213,77 +212,21 @@ func Test_VaultClient_GivenEmptyConfiguration_ReturnsError(t *testing.T) {
 }
 
 func Test_KubernetesClient_GivenKubernetesConfigAndSecretData_CanApplySecret(t *testing.T) {
-	kubernetesConfig, err := kubernetes.NewKubernetesConfig(kubernetes.KubernetesParameters{Namespace: "default"})
-	if err != nil {
-		t.Error("Expected no error, got ", err)
-	}
-
-	kubernetesClient, err := kubernetes.NewKubernetesClient(kubernetesConfig)
-	if err != nil {
-		t.Error("Expected no error, got ", err)
-	}
-
-	err = kubernetesClient.ApplySecret(context.TODO(), "app-config", map[string]string{
-		"key": "value",
-	})
-	if err != nil {
-		t.Error("Expected no error, got ", err)
-	}
+	t.Fail()
 }
 
 func Test_KubernetesClient_GivenKubernetesConfigAndSecretData_CanApplyConfigMap(t *testing.T) {
-	kubernetesConfig, err := kubernetes.NewKubernetesConfig(kubernetes.KubernetesParameters{Namespace: "default"})
-	if err != nil {
-		t.Error("Expected no error, got ", err)
-	}
-
-	kubernetesClient, err := kubernetes.NewKubernetesClient(kubernetesConfig)
-	if err != nil {
-		t.Error("Expected no error, got ", err)
-	}
-
-	err = kubernetesClient.ApplyConfigMap(context.TODO(), "app-config", map[string]string{
-		"key": "value",
-	})
-	if err != nil {
-		t.Error("Expected no error, got ", err)
-	}
+	t.Fail()
 }
 
 func Test_KubernetesClient_GivenEmptySecretData_CanApplyEmptySecret(t *testing.T) {
-	kubernetesConfig, err := kubernetes.NewKubernetesConfig(kubernetes.KubernetesParameters{Namespace: "default"})
-	if err != nil {
-		t.Error("Expected no error, got ", err)
-	}
-
-	kubernetesClient, err := kubernetes.NewKubernetesClient(kubernetesConfig)
-	if err != nil {
-		t.Error("Expected no error, got ", err)
-	}
-
-	err = kubernetesClient.ApplySecret(context.TODO(), "app-secret", map[string]string{})
-	if err != nil {
-		t.Error("Expected no error, got ", err)
-	}
+	t.Fail()
 }
 
 func Test_KubernetesClient_GivenEmptySecretData_CanApplyEmptyConfigMap(t *testing.T) {
-	kubernetesConfig, err := kubernetes.NewKubernetesConfig(kubernetes.KubernetesParameters{Namespace: "default"})
-	if err != nil {
-		t.Error("Expected no error, got ", err)
-	}
-
-	kubernetesClient, err := kubernetes.NewKubernetesClient(kubernetesConfig)
-	if err != nil {
-		t.Error("Expected no error, got ", err)
-	}
-
-	err = kubernetesClient.ApplyConfigMap(context.TODO(), "app-config", map[string]string{})
-	if err != nil {
-		t.Error("Expected no error, got ", err)
-	}
+	t.Fail()
 }
 
-func Test_KubernetesClient_GivenIncorrectKubernetesConfig_CanHandleError(t *testing.T) {
-	t.Skip("Not implemented")
+func Test_KubernetesClient_GivenIncorrectKubernetesParameters_ReturnsErrorWhenCreatingConfig(t *testing.T) {
+	t.Fail()
 }
