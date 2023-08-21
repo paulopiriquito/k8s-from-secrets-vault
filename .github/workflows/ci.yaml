@@ -72,7 +72,21 @@ jobs:
         continue-on-error: true
         with:
           message-path: ./src/test-summary.md
+      - name: Fail on test failure
+        run: |
+          if [ -f ./src/test_report.xml ]; then
+            if grep -q "failures=\"0\""; then
+              echo "All tests passed"
+            else
+              echo "Some tests failed"
+              exit 1
+            fi
+          else
+            echo "No test report found"
+            exit 1
+          fi
   integration-test:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     name: Integration Test
     environment: dev
     runs-on: ubuntu-latest
