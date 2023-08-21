@@ -42,16 +42,19 @@ jobs:
       - name: Install dependencies
         run : go mod download
         working-directory: ./src
-      - name: Run tests
+      - name: Install go-junit-report
         run: |
           go install github.com/jstemmer/go-junit-report/v2@latest
-          go test -v ./... | go-junit-report -set-exit-code > ../test_report.xml
+        working-directory: ./src
+      - name: Run tests and generate report
+        run: |
+          go test -v -coverprofile=coverage.out ./... 2>&1 | go-junit-report > ./test_report.xml
         working-directory: ./src
       - name: Test Summary
         uses: test-summary/action@v1
         with:
-          paths: "**/test_report.xml"
-          output: "./test-summary.md"
+          paths: "./src/test_report.xml"
+          output: "./src/test-summary.md"
           show: "all"
         if: always()
       - name: Comment on pull request
@@ -59,7 +62,7 @@ jobs:
         if: always()
         continue-on-error: true
         with:
-          message-path: ./test-summary.md
+          message-path: ./src/test-summary.md
   integration-test:
     name: Integration Test
     environment: dev
