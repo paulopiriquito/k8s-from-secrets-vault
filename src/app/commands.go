@@ -17,6 +17,37 @@ type Command struct {
 
 	Base64Kubeconfig string
 	Namespace        string
+
+	LoadAsConfigMap bool
+
+	kubernetesClient kubernetes.KubernetesClient
+}
+
+func SetupCommand(args []string) Command {
+	return Command{
+		Address:          args[0],
+		AuthToken:        args[1],
+		VaultNamespace:   args[2],
+		EngineName:       args[3],
+		SecretPath:       args[4],
+		Base64Kubeconfig: args[5],
+		Namespace:        args[6],
+		LoadAsConfigMap:  args[7] == "true",
+	}
+}
+
+func SetupCommandWithKubernetesClient(args []string, kubernetesClient kubernetes.KubernetesClient) Command {
+	command := SetupCommand(args)
+	command.kubernetesClient = kubernetesClient
+	return command
+}
+
+func (command Command) Execute() error {
+	if command.LoadAsConfigMap {
+		return command.loadAndApplyConfigMap()
+	} else {
+		return command.loadAndApplySecrets()
+	}
 }
 
 func (command Command) vaultParameters() vault.VaultConfig {
@@ -36,7 +67,7 @@ func (command Command) kubeParameters() kubernetes.KubernetesParameters {
 	}
 }
 
-func (command Command) LoadAndApplySecrets() error {
+func (command Command) loadAndApplySecrets() error {
 	log := setupLogger()
 
 	data, err := vault.LoadSecretData(command.vaultParameters(), log)
@@ -45,17 +76,20 @@ func (command Command) LoadAndApplySecrets() error {
 		return err
 	}
 
-	kubernetesConfig, err := kubernetes.NewKubernetesConfig(command.kubeParameters())
+	kubernetesConfig, err := kubernetes.CreateConfig(command.kubeParameters(), log)
 	if err != nil {
 		return err
 	}
 
-	kubernetesClient, err := kubernetes.NewKubernetesClient(kubernetesConfig)
+	kubernetesClient, err := kubernetes.CreateClient(kubernetesConfig, log)
+	if command.kubernetesClient != nil {
+		kubernetesClient = command.kubernetesClient
+	}
 	if err != nil {
 		return err
 	}
 
-	err = kubernetesClient.ApplySecret(context.TODO(), "app-secret", data)
+	err = kubernetesClient.ApplySecret(context.TODO(), "app-secret", data, log)
 	if err != nil {
 		return err
 	}
@@ -63,7 +97,7 @@ func (command Command) LoadAndApplySecrets() error {
 	return nil
 }
 
-func (command Command) LoadAndApplyConfigMap() interface{} {
+func (command Command) loadAndApplyConfigMap() error {
 	log := setupLogger()
 
 	data, err := vault.LoadSecretData(command.vaultParameters(), log)
@@ -72,17 +106,20 @@ func (command Command) LoadAndApplyConfigMap() interface{} {
 		return err
 	}
 
-	kubernetesConfig, err := kubernetes.NewKubernetesConfig(command.kubeParameters())
+	kubernetesConfig, err := kubernetes.CreateConfig(command.kubeParameters(), log)
 	if err != nil {
 		return err
 	}
 
-	kubernetesClient, err := kubernetes.NewKubernetesClient(kubernetesConfig)
+	kubernetesClient, err := kubernetes.CreateClient(kubernetesConfig, log)
+	if command.kubernetesClient != nil {
+		kubernetesClient = command.kubernetesClient
+	}
 	if err != nil {
 		return err
 	}
 
-	err = kubernetesClient.ApplyConfigMap(context.TODO(), "app-config", data)
+	err = kubernetesClient.ApplyConfigMap(context.TODO(), "app-config", data, log)
 	if err != nil {
 		return err
 	}

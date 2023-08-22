@@ -1,31 +1,66 @@
 package tests
 
 import (
+	"context"
 	"k8s-from-secrets-vault/app"
+	kubernetes "k8s-from-secrets-vault/kubernetes"
 	vaultclient "k8s-from-secrets-vault/vault"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"strings"
 	"testing"
 )
 
 func Test_Command_GivenRequiredArgs_CanLoadAndApplySecrets(t *testing.T) {
-	command := app.Command{
-		Address:          "http://",
-		AuthToken:        "",
-		VaultNamespace:   "",
-		EngineName:       "",
-		SecretPath:       "",
-		Base64Kubeconfig: "",
-		Namespace:        "",
+	log := setupLogger(t)
+
+	expectedSecretData := map[string]interface{}{
+		"TEST_KEY": "TEST_VALUE",
 	}
 
-	err := command.LoadAndApplySecrets()
+	vaultClientConfig, vaultHttpListener := getClientConfigForNewTestVaultWithSecrets(t, expectedSecretData)
+	defer destroyVaultHttpListener(t, vaultHttpListener)
 
+	parameters := getFakeKubernetesParameters(t)
+
+	//Transform command into a string array
+	commandArgs := []string{
+		"app",
+		"--address", vaultClientConfig.Address,
+		"--auth-token", vaultClientConfig.AuthToken,
+		"--vault-namespace", vaultClientConfig.Namespace,
+		"--engine-name", vaultClientConfig.EngineName,
+		"--secret-path", vaultClientConfig.SecretPath,
+		"--base64-kubeconfig", parameters.Base64Kubeconfig,
+		"--namespace", parameters.Namespace,
+		"--load-as-configmap", "false",
+	}
+
+	config, err := kubernetes.CreateConfig(parameters, log)
 	if err != nil {
 		t.Error("Expected no error, got ", err)
+	}
+
+	client, fakeClient, err := getFakeKubernetesClient(config, t)
+	if err != nil {
+		t.Error("Expected no error, got ", err)
+	}
+
+	command := app.SetupCommandWithKubernetesClient(commandArgs, client)
+	err = command.Execute()
+	if err != nil {
+		t.Error("Expected no error, got ", err)
+	}
+
+	secret, err := fakeClient.CoreV1().Secrets("test-namespace").Get(context.TODO(), "test-secret", metav1.GetOptions{})
+	if err != nil {
+		t.Error("Expected no error, got ", err)
+	}
+	if secret.StringData["TEST_KEY"] != "TEST_VALUE" {
+		t.Error("Expected secret to contain TEST_KEY with value TEST_VALUE")
 	}
 }
 
-func Test_Command_GivenIncorrectArgs_CanHandleError(t *testing.T) {
+func Test_Command_GivenIncorrectArgs_ReturnsError(t *testing.T) {
 	command := app.Command{
 		Address:          "http://",
 		AuthToken:        "",
@@ -34,12 +69,13 @@ func Test_Command_GivenIncorrectArgs_CanHandleError(t *testing.T) {
 		SecretPath:       "",
 		Base64Kubeconfig: "",
 		Namespace:        "",
+		LoadAsConfigMap:  false,
 	}
 
-	err := command.LoadAndApplyConfigMap()
+	err := command.Execute()
 
-	if err != nil {
-		t.Error("Expected no error, got ", err)
+	if err == nil {
+		t.Error("Expected error")
 	}
 }
 
@@ -212,21 +248,162 @@ func Test_VaultClient_GivenEmptyConfiguration_ReturnsError(t *testing.T) {
 }
 
 func Test_KubernetesClient_GivenKubernetesConfigAndSecretData_CanApplySecret(t *testing.T) {
-	t.Fail()
+	log := setupLogger(t)
+
+	parameters := kubernetes.KubernetesParameters{
+		Base64Kubeconfig: getFakeKubeconfigAsBase64(t),
+		Namespace:        "test",
+	}
+
+	config, err := kubernetes.CreateConfig(parameters, log)
+	if err != nil {
+		t.Error("Expected no error, got ", err)
+	}
+
+	client, fakeClient, err := getFakeKubernetesClient(config, t)
+	if err != nil {
+		t.Error("Expected no error, got ", err)
+	}
+
+	err = client.ApplySecret(context.Background(), "test-secret", map[string]string{"TEST_KEY": "TEST_VALUE"}, log)
+	if err != nil {
+		t.Error("Expected no error, got ", err)
+	}
+
+	secret, err := fakeClient.CoreV1().Secrets("test").Get(context.Background(), "test-secret", metav1.GetOptions{})
+	if err != nil {
+		t.Error("Expected no error, got ", err)
+	}
+	if secret.StringData["TEST_KEY"] != "TEST_VALUE" {
+		t.Error("Expected secret to contain TEST_KEY with value TEST_VALUE")
+	}
 }
 
 func Test_KubernetesClient_GivenKubernetesConfigAndSecretData_CanApplyConfigMap(t *testing.T) {
-	t.Fail()
+	log := setupLogger(t)
+
+	parameters := kubernetes.KubernetesParameters{
+		Base64Kubeconfig: getFakeKubeconfigAsBase64(t),
+		Namespace:        "test",
+	}
+
+	config, err := kubernetes.CreateConfig(parameters, log)
+	if err != nil {
+		t.Error("Expected no error, got ", err)
+	}
+
+	client, fakeClient, err := getFakeKubernetesClient(config, t)
+	if err != nil {
+		t.Error("Expected no error, got ", err)
+	}
+
+	err = client.ApplyConfigMap(context.Background(), "test-config", map[string]string{"TEST_KEY": "TEST_VALUE"}, log)
+	if err != nil {
+		t.Error("Expected no error, got ", err)
+	}
+
+	configMap, err := fakeClient.CoreV1().ConfigMaps("test").Get(context.Background(), "test-config", metav1.GetOptions{})
+	if err != nil {
+		t.Error("Expected no error, got ", err)
+	}
+	if configMap.Data["TEST_KEY"] != "TEST_VALUE" {
+		t.Error("Expected config map to contain TEST_KEY with value TEST_VALUE")
+	}
 }
 
 func Test_KubernetesClient_GivenEmptySecretData_CanApplyEmptySecret(t *testing.T) {
-	t.Fail()
+	log := setupLogger(t)
+
+	parameters := kubernetes.KubernetesParameters{
+		Base64Kubeconfig: getFakeKubeconfigAsBase64(t),
+		Namespace:        "test",
+	}
+
+	config, err := kubernetes.CreateConfig(parameters, log)
+	if err != nil {
+		t.Error("Expected no error, got ", err)
+	}
+
+	client, fakeClient, err := getFakeKubernetesClient(config, t)
+	if err != nil {
+		t.Error("Expected no error, got ", err)
+	}
+
+	err = client.ApplySecret(context.Background(), "test-secret", map[string]string{}, log)
+	if err != nil {
+		t.Error("Expected no error, got ", err)
+	}
+
+	secret, err := fakeClient.CoreV1().Secrets("test").Get(context.Background(), "test-secret", metav1.GetOptions{})
+	if err != nil {
+		t.Error("Expected no error, got ", err)
+	}
+	if len(secret.StringData) > 0 {
+		t.Error("Expected secret to be empty")
+	}
 }
 
 func Test_KubernetesClient_GivenEmptySecretData_CanApplyEmptyConfigMap(t *testing.T) {
-	t.Fail()
+	log := setupLogger(t)
+
+	parameters := kubernetes.KubernetesParameters{
+		Base64Kubeconfig: getFakeKubeconfigAsBase64(t),
+		Namespace:        "test",
+	}
+
+	config, err := kubernetes.CreateConfig(parameters, log)
+	if err != nil {
+		t.Error("Expected no error, got ", err)
+	}
+
+	client, fakeClient, err := getFakeKubernetesClient(config, t)
+	if err != nil {
+		t.Error("Expected no error, got ", err)
+	}
+
+	err = client.ApplyConfigMap(context.Background(), "test-config", map[string]string{}, log)
+	if err != nil {
+		t.Error("Expected no error, got ", err)
+	}
+
+	configMap, err := fakeClient.CoreV1().ConfigMaps("test").Get(context.Background(), "test-config", metav1.GetOptions{})
+	if err != nil {
+		t.Error("Expected no error, got ", err)
+	}
+	if len(configMap.Data) > 0 {
+		t.Error("Expected config map to be empty")
+	}
 }
 
 func Test_KubernetesClient_GivenIncorrectKubernetesParameters_ReturnsErrorWhenCreatingConfig(t *testing.T) {
-	t.Fail()
+	log := setupLogger(t)
+
+	parameters := kubernetes.KubernetesParameters{}
+
+	_, err := kubernetes.CreateConfig(parameters, log)
+
+	if err == nil {
+		t.Error("Expected error")
+	}
+}
+
+func Test_KubernetesClient_GivenValidParameters_CanCreateConfig(t *testing.T) {
+	log := setupLogger(t)
+
+	parameters := kubernetes.KubernetesParameters{
+		Base64Kubeconfig: getFakeKubeconfigAsBase64(t),
+		Namespace:        "test",
+	}
+
+	config, err := kubernetes.CreateConfig(parameters, log)
+
+	if err != nil {
+		t.Error("Expected no error, got ", err)
+	}
+	if config.GetNamespace() != "test" {
+		t.Error("Expected namespace to be 'test'")
+	}
+	if config.GetServer() != "https://example.com" {
+		t.Error("Expected server to be 'https://example.com'")
+	}
 }
