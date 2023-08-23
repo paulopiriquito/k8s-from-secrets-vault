@@ -98,9 +98,8 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v3
       - name: Run test action for configmap
-        uses: ./
+        uses: test/
         with:
-          imageTag: 'develop'
           vault-address: ${{ secrets.VAULT_URL }}
           vault-token: ${{ secrets.VAULT_TOKEN }}
           vault-namespace: ${{ secrets.VAULT_NAMESPACE }}
@@ -111,9 +110,8 @@ jobs:
           load-as-configmap: 'true'
           object-name-to-apply: 'test-configmap'
       - name: Run test action for secrets
-        uses: ./
+        uses: test/
         with:
-          imageTag: 'develop'
           vault-address: ${{ secrets.VAULT_URL }}
           vault-token: ${{ secrets.VAULT_TOKEN }}
           vault-namespace: ${{ secrets.VAULT_NAMESPACE }}
@@ -135,7 +133,7 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Add tag to docker image
-        run: docker tag piriquito/k8s-from-secrets-vault:develop piriquito/k8s-from-secrets-vault:${{ github.event.release.tag_name }}
+        run: docker tag piriquito/k8s-from-secrets-vault:develop piriquito/k8s-from-secrets-vault:${{ github.event.release.tag_name }}-beta
       - name: Push docker image
         run: docker push piriquito/k8s-from-secrets-vault:${{ github.ref }}
   release:
@@ -153,10 +151,13 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Add latest tag to docker image
-        run: piriquito/k8s-from-secrets-vault:${{ github.event.release.tag_name }} piriquito/k8s-from-secrets-vault:latest
-      - name: Push docker image
-        run: docker push piriquito/k8s-from-secrets-vault:${{ github.ref }}
-
+        run: |
+          docker tag piriquito/k8s-from-secrets-vault:${{ github.event.release.tag_name }}-beta piriquito/k8s-from-secrets-vault:${{ github.event.release.tag_name }}
+          docker tag piriquito/k8s-from-secrets-vault:${{ github.event.release.tag_name }} piriquito/k8s-from-secrets-vault:latest
+      - name: Push docker images
+        run: |
+          docker push piriquito/k8s-from-secrets-vault:${{ github.event.release.tag_name }}
+          docker push piriquito/k8s-from-secrets-vault:latest
       - name: Update prerelease to release
         uses: actions/github-script@v3
         with:
