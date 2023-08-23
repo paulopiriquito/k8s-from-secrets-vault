@@ -8,6 +8,18 @@ import (
 	"os"
 )
 
+const (
+	VaultAddress      = "VAULT_ADDRESS"
+	VaultToken        = "VAULT_TOKEN"
+	VaultNamespace    = "VAULT_NAMESPACE"
+	VaultEngine       = "VAULT_ENGINE"
+	VaultSecretPath   = "VAULT_SECRET_PATH"
+	Kubeconfig        = "KUBECONFIG"
+	Namespace         = "KUBERNETES_NAMESPACE"
+	ApplyAsConfigmap  = "APPLY_AS_CONFIGMAP"
+	ObjectNameToApply = "OBJECT_NAME_TO_APPLY"
+)
+
 type Command struct {
 	Address        string
 	AuthToken      string
@@ -18,26 +30,38 @@ type Command struct {
 	Base64Kubeconfig string
 	Namespace        string
 
-	LoadAsConfigMap bool
+	LoadAsConfigMap   bool
+	ObjectNameToApply string
 
 	kubernetesClient kubernetes.KubernetesClient
 }
 
-func SetupCommand(args []string) Command {
+func SetupCommand() Command {
 	return Command{
-		Address:          args[0],
-		AuthToken:        args[1],
-		VaultNamespace:   args[2],
-		EngineName:       args[3],
-		SecretPath:       args[4],
-		Base64Kubeconfig: args[5],
-		Namespace:        args[6],
-		LoadAsConfigMap:  args[7] == "true",
+		Address:           os.Getenv(VaultAddress),
+		AuthToken:         os.Getenv(VaultToken),
+		VaultNamespace:    os.Getenv(VaultNamespace),
+		EngineName:        os.Getenv(VaultEngine),
+		SecretPath:        os.Getenv(VaultSecretPath),
+		Base64Kubeconfig:  os.Getenv(Kubeconfig),
+		Namespace:         os.Getenv(Namespace),
+		ObjectNameToApply: os.Getenv(ObjectNameToApply),
+		LoadAsConfigMap:   os.Getenv(ApplyAsConfigmap) == "true",
 	}
 }
 
-func SetupCommandWithKubernetesClient(args []string, kubernetesClient kubernetes.KubernetesClient) Command {
-	command := SetupCommand(args)
+func SetupCommandWithKubernetesClient(args map[string]string, kubernetesClient kubernetes.KubernetesClient) Command {
+	_ = os.Setenv(VaultAddress, args[VaultAddress])
+	_ = os.Setenv(VaultToken, args[VaultToken])
+	_ = os.Setenv(VaultNamespace, args[VaultNamespace])
+	_ = os.Setenv(VaultEngine, args[VaultEngine])
+	_ = os.Setenv(VaultSecretPath, args[VaultSecretPath])
+	_ = os.Setenv(Kubeconfig, args[Kubeconfig])
+	_ = os.Setenv(Namespace, args[Namespace])
+	_ = os.Setenv(ApplyAsConfigmap, args[ApplyAsConfigmap])
+	_ = os.Setenv(ObjectNameToApply, args[ObjectNameToApply])
+
+	command := SetupCommand()
 	command.kubernetesClient = kubernetesClient
 	return command
 }
@@ -89,7 +113,7 @@ func (command Command) loadAndApplySecrets() error {
 		return err
 	}
 
-	err = kubernetesClient.ApplySecret(context.TODO(), "app-secret", data, log)
+	err = kubernetesClient.ApplySecret(context.TODO(), command.ObjectNameToApply, data, log)
 	if err != nil {
 		return err
 	}
@@ -119,7 +143,7 @@ func (command Command) loadAndApplyConfigMap() error {
 		return err
 	}
 
-	err = kubernetesClient.ApplyConfigMap(context.TODO(), "app-config", data, log)
+	err = kubernetesClient.ApplyConfigMap(context.TODO(), command.ObjectNameToApply, data, log)
 	if err != nil {
 		return err
 	}

@@ -1,54 +1,57 @@
 # action.yml
 name: 'Configmap and Secrets from Hashicorp Vault'
-description: 'Produce K8s secrets or config-maps from Hashicorp secret engine entry'
+description: 'Apply K8s secrets or config-maps object with data from Hashicorp secret vault path'
 branding:
   icon: anchor
   color: blue
 author: paulopiriquito
 inputs:
-  kubeconfig:
-    description: 'Kubeconfig as base64 string to connect to cluster'
-  namespace:
-    description: 'Cluster namespace to apply resource'
+  vault-address:
+    description: 'Hashicorp Vault address'
     required: true
-    default: 'default'
-  resource-name:
-    description: 'Name of the k8s resource to create'
-  resource-type:
-    description: 'K8s resource type (config-map or secret)'
+  vault-token:
+    description: 'Hashicorp Vault token'
     required: true
-    default: 'secret'
-  vault-url:
-    description: 'Base url to vault, without /v1 (version) part'
-    required: true
-  engine-name:
-    description: 'Name of secret engine'
-    required: true
-  secret-name:
-    description: 'Name of secrets entry'
-    required: true
-  vault-auth-token:
-    description: 'Access token to vault'
-    required: true
-
-  debug:
-    description: 'Output secret key names, and yaml output with hidden values'
+  vault-namespace:
+    description: 'Hashicorp Vault namespace'
     required: false
+    default: ''
+  vault-engine:
+    description: 'Hashicorp Vault engine (mount) name'
+    required: false
+    default: 'secret'
+  vault-secret-path:
+    description: 'Hashicorp Vault secret path (no /data prefix expected)'
+    required: true
+  kubeconfig:
+    description: 'Kubernetes config file in a base64 encoded string'
+    required: true
+  kubernetes-namespace:
+    description: 'Kubernetes namespace'
+    required: true
+  load-as-configmap:
+    description: 'Apply as configmap instead of secret'
+    required: false
+    default: 'false'
+  object-name-to-apply:
+    description: 'Kubernetes object name to apply'
+    required: true
 
-  imagelabel:
-    description: 'Image label to use'
+  imageTag:
+    description: 'Image tag to use'
     required: false
     default: 'latest'
 
 runs:
   using: 'docker'
   image: 'docker:piriquito/k8s-from-secrets-vault:${{ inputs.imagelabel }}'
-  args:
-    - ${{ inputs.kubeconfig }}
-    - ${{ inputs.namespace }}
-    - ${{ inputs.resource-name }}
-    - ${{ inputs.resource-type }}
-    - ${{ inputs.vault-url }}
-    - ${{ inputs.engine-name }}
-    - ${{ inputs.secret-name }}
-    - ${{ inputs.vault-auth-token }}
+  env:
+    VAULT_ADDRESS: ${{ inputs.vault-address }}
+    VAULT_TOKEN: ${{ inputs.vault-token }}
+    VAULT_NAMESPACE: ${{ inputs.vault-namespace }}
+    VAULT_ENGINE: ${{ inputs.vault-engine }}
+    VAULT_SECRET_PATH: ${{ inputs.vault-secret-path }}
+    KUBECONFIG: ${{ inputs.kubeconfig }}
+    KUBERNETES_NAMESPACE: ${{ inputs.kubernetes-namespace }}
+    LOAD_AS_CONFIGMAP: ${{ inputs.load-as-configmap }}
+    OBJECT_NAME_TO_APPLY: ${{ inputs.object-name-to-apply }}

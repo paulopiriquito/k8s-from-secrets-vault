@@ -23,16 +23,15 @@ func Test_Command_GivenRequiredArgs_CanLoadAndApplySecrets(t *testing.T) {
 	parameters := getFakeKubernetesParameters(t)
 
 	//Transform command into a string array
-	commandArgs := []string{
-		"app",
-		"--address", vaultClientConfig.Address,
-		"--auth-token", vaultClientConfig.AuthToken,
-		"--vault-namespace", vaultClientConfig.Namespace,
-		"--engine-name", vaultClientConfig.EngineName,
-		"--secret-path", vaultClientConfig.SecretPath,
-		"--base64-kubeconfig", parameters.Base64Kubeconfig,
-		"--namespace", parameters.Namespace,
-		"--load-as-configmap", "false",
+	commandArgs := map[string]string{
+		app.VaultAddress:      vaultClientConfig.Address,
+		app.VaultToken:        vaultClientConfig.AuthToken,
+		app.VaultEngine:       vaultClientConfig.EngineName,
+		app.VaultSecretPath:   vaultClientConfig.SecretPath,
+		app.Kubeconfig:        parameters.Base64Kubeconfig,
+		app.Namespace:         parameters.Namespace,
+		app.ApplyAsConfigmap:  "false",
+		app.ObjectNameToApply: "test-secret",
 	}
 
 	config, err := kubernetes.CreateConfig(parameters, log)
