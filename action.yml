@@ -44,7 +44,7 @@ inputs:
 
 runs:
   using: 'docker'
-  image: 'docker:piriquito/k8s-from-secrets-vault:${{ inputs.imagelabel }}'
+  image: 'docker:piriquito/k8s-from-secrets-vault:${{ inputs.imageTag }}'
   env:
     VAULT_ADDRESS: ${{ inputs.vault-address }}
     VAULT_TOKEN: ${{ inputs.vault-token }}
