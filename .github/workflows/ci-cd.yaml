@@ -1,9 +1,21 @@
-name: Build and push to GH
+name: CI - CD
+
+permissions:
+  contents: write
+  id-token: write
+  pull-requests: write
+
 on:
   workflow_dispatch:
   push:
-    tags:
-      - 'v*.*.*'
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+  release:
+    types:
+      - prereleased
 jobs:
   build:
     name: Build
@@ -22,9 +34,142 @@ jobs:
         id: docker_build
         uses: docker/build-push-action@v2
         with:
-          context: .
-          file: ./Dockerfile
+          context: ./src
+          file: ./docker/Dockerfile
           push: true
-          tags: piriquito/k8s-from-secrets-vault:latest
+          tags: piriquito/k8s-from-secrets-vault:develop
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+      - name: Setup Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '1.21'
+      - name: Install dependencies
+        run : go mod download
+        working-directory: ./src
+      - name: Install go-junit-report
+        run: |
+          go install github.com/jstemmer/go-junit-report/v2@latest
+        working-directory: ./src
+      - name: Run tests and generate report
+        run: |
+          go test -v -coverprofile=coverage.out ./... 2>&1 | go-junit-report > ./test_report.xml
+        working-directory: ./src
+      - name: Test Summary
+        uses: test-summary/action@v1
+        with:
+          paths: "./src/test_report.xml"
+          output: "./src/test-summary.md"
+          show: "all"
+        if: always()
+      - name: Comment on pull request
+        uses: mshick/add-pr-comment@v2
+        if: always()
+        continue-on-error: true
+        with:
+          message-path: ./src/test-summary.md
+      - name: Fail on test failure
+        run: |
+          if [ -f ./src/test-summary.md ]; then
+            if grep -q "f=0&s=0" "./src/test-summary.md"; then
+              echo "All tests passed"
+            else
+              echo "Some tests failed"
+              exit 1
+            fi
+          else
+            echo "No test report found"
+            exit 1
+          fi
+  integration-test:
+    if: github.event_name == 'push'|| github.event_name == 'release'
+    name: Integration Test
+    environment: dev
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+      - name: Run test action for configmap
+        uses: ./
+        with:
+          imageTag: 'develop'
+          vault-address: ${{ secrets.VAULT_URL }}
+          vault-token: ${{ secrets.VAULT_TOKEN }}
+          vault-namespace: ${{ secrets.VAULT_NAMESPACE }}
+          vault-engine: ${{ secrets.SECRET_ENGINE }}
+          vault-secret-path: ${{ secrets.SECRET_PATH }}
+          kubeconfig: ${{ secrets.KUBECONFIG }}
+          kubernetes-namespace: ${{ secrets.NAMESPACE }}
+          load-as-configmap: 'true'
+          object-name-to-apply: 'test-configmap'
+      - name: Run test action for secrets
+        uses: ./
+        with:
+          imageTag: 'develop'
+          vault-address: ${{ secrets.VAULT_URL }}
+          vault-token: ${{ secrets.VAULT_TOKEN }}
+          vault-namespace: ${{ secrets.VAULT_NAMESPACE }}
+          vault-engine: ${{ secrets.SECRET_ENGINE }}
+          vault-secret-path: ${{ secrets.SECRET_PATH }}
+          kubeconfig: ${{ secrets.KUBECONFIG }}
+          kubernetes-namespace: ${{ secrets.NAMESPACE }}
+          load-as-configmap: 'false'
+          object-name-to-apply: 'test-secret'
+  pre-release:
+    name: Pre-Release
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'release'
+    steps:
+      - name: Dockerhub Login
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Add tag to docker image
+        run: docker tag piriquito/k8s-from-secrets-vault:develop piriquito/k8s-from-secrets-vault:${{ github.event.release.tag_name }}
+      - name: Push docker image
+        run: docker push piriquito/k8s-from-secrets-vault:${{ github.ref }}
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    needs:
+      - pre-release
+      - integration-test
+    environment: production
+    if: github.event_name == 'release'
+    steps:
+      - name: Dockerhub Login
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Add latest tag to docker image
+        run: piriquito/k8s-from-secrets-vault:${{ github.event.release.tag_name }} piriquito/k8s-from-secrets-vault:latest
+      - name: Push docker image
+        run: docker push piriquito/k8s-from-secrets-vault:${{ github.ref }}
+
+      - name: Update prerelease to release
+        uses: actions/github-script@v3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const payload = {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: '${{ github.event.release.tag_name }}'
+              target_commitish: context.sha,
+              name: '${{ github.event.release.name }}',
+              body: '${{ github.event.release.body }}',
+              draft: false,
+              prerelease: false
+            }
+            github.repos.updateRelease(payload)
