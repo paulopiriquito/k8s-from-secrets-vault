@@ -77,8 +77,8 @@ jobs:
           message-path: ./src/test-summary.md
       - name: Fail on test failure
         run: |
-          if [ -f ./src/test_report.xml ]; then
-            if grep -q "failures=\"0\""; then
+          if [ -f ./src/test-summary.md ]; then
+            if grep -q "f=0&s=0"; then
               echo "All tests passed"
             else
               echo "Some tests failed"
