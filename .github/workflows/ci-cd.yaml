@@ -78,7 +78,7 @@ jobs:
       - name: Fail on test failure
         run: |
           if [ -f ./src/test-summary.md ]; then
-            if grep -q "f=0&s=0"; then
+            if grep -q "f=0&s=0" "./src/test-summary.md"; then
               echo "All tests passed"
             else
               echo "Some tests failed"
