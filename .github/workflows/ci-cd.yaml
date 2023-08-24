@@ -16,6 +16,7 @@ on:
   release:
     types:
       - prereleased
+      - released
 jobs:
   build:
     name: Build
@@ -88,44 +89,11 @@ jobs:
             echo "No test report found"
             exit 1
           fi
-  integration-test:
-    if: github.event_name == 'push'|| github.event_name == 'release'
-    name: Integration Test
-    environment: dev
-    runs-on: ubuntu-latest
-    needs: test
-    steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v3
-      - name: Run test action for configmap
-        uses: ./test/
-        with:
-          vault-address: ${{ secrets.VAULT_URL }}
-          vault-token: ${{ secrets.VAULT_TOKEN }}
-          vault-namespace: ${{ secrets.VAULT_NAMESPACE }}
-          vault-engine: ${{ secrets.SECRET_ENGINE }}
-          vault-secret-path: ${{ secrets.SECRET_PATH }}
-          kubeconfig: ${{ secrets.KUBECONFIG }}
-          kubernetes-namespace: ${{ secrets.NAMESPACE }}
-          load-as-configmap: 'true'
-          object-name-to-apply: 'test-configmap'
-      - name: Run test action for secrets
-        uses: ./test/
-        with:
-          vault-address: ${{ secrets.VAULT_URL }}
-          vault-token: ${{ secrets.VAULT_TOKEN }}
-          vault-namespace: ${{ secrets.VAULT_NAMESPACE }}
-          vault-engine: ${{ secrets.SECRET_ENGINE }}
-          vault-secret-path: ${{ secrets.SECRET_PATH }}
-          kubeconfig: ${{ secrets.KUBECONFIG }}
-          kubernetes-namespace: ${{ secrets.NAMESPACE }}
-          load-as-configmap: 'false'
-          object-name-to-apply: 'test-secret'
   pre-release:
     name: Pre-Release
     runs-on: ubuntu-latest
     needs: test
-    if: github.event_name == 'release'
+    if: github.event_name == 'release' && github.event.release.prerelease == true
     steps:
       - name: Dockerhub Login
         uses: docker/login-action@v1
@@ -137,15 +105,14 @@ jobs:
           docker pull piriquito/k8s-from-secrets-vault:develop
           docker tag piriquito/k8s-from-secrets-vault:develop piriquito/k8s-from-secrets-vault:${{ github.event.release.tag_name }}
       - name: Push docker image
-        run: docker push piriquito/k8s-from-secrets-vault:${{ github.ref }}
+        run: docker push piriquito/k8s-from-secrets-vault:${{ github.event.release.tag_name }}
   release:
     name: Release
     runs-on: ubuntu-latest
     needs:
       - pre-release
-      - integration-test
     environment: production
-    if: github.event_name == 'release'
+    if: github.event_name == 'release' && github.event.release.draft == false && github.event.release.prerelease == false
     steps:
       - name: Dockerhub Login
         uses: docker/login-action@v1
@@ -159,19 +126,3 @@ jobs:
       - name: Push docker images
         run: |
           docker push piriquito/k8s-from-secrets-vault:latest
-      - name: Update prerelease to release
-        uses: actions/github-script@v3
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const payload = {
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              tag_name: '${{ github.event.release.tag_name }}'
-              target_commitish: context.sha,
-              name: '${{ github.event.release.name }}',
-              body: '${{ github.event.release.body }}',
-              draft: false,
-              prerelease: false
-            }
-            github.repos.updateRelease(payload)
