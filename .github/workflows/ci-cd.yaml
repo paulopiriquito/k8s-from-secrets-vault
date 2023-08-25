@@ -93,7 +93,7 @@ jobs:
     name: Pre-Release
     runs-on: ubuntu-latest
     needs: test
-    if: github.event_name == 'release' && github.event.release.prerelease == true
+    if: github.event_name == 'release'
     steps:
       - name: Dockerhub Login
         uses: docker/login-action@v2
