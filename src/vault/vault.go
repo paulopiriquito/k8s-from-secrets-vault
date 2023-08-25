@@ -65,12 +65,24 @@ func LoadSecretData(config VaultConfig, log *logrus.Logger) (map[string]string, 
 	}
 
 	secretData := make(map[string]string)
-	for k, v := range secret.Data {
-		var value = ""
-		if v != nil {
-			value = fmt.Sprintf("%v", v)
+
+	// If secret.Data has key named "data" then it is a KVv2 secret
+	if _, ok := secret.Data["data"]; ok {
+		for k, v := range secret.Data["data"].(map[string]interface{}) {
+			var value = ""
+			if v != nil {
+				value = fmt.Sprintf("%v", v)
+			}
+			secretData[k] = value
 		}
-		secretData[k] = value
+	} else {
+		for k, v := range secret.Data {
+			var value = ""
+			if v != nil {
+				value = fmt.Sprintf("%v", v)
+			}
+			secretData[k] = value
+		}
 	}
 
 	log.WithFields(logrus.Fields{
