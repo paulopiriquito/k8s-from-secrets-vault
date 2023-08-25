@@ -36,6 +36,8 @@ type KubernetesParameters struct {
 const CREATE = true
 const APPLY = false
 
+const fieldManagerName = "k8s-from-secrets-vault"
+
 func InjectKubernetesClient(client kubernetes.Interface, config KubernetesConfig) KubernetesClient {
 	return kubernetesClient{config, client, CREATE}
 }
@@ -140,7 +142,7 @@ func (c kubernetesClient) createSecret(context context.Context, secretName strin
 	}
 
 	log.Infof("Creating secret %s in namespace %s", secretName, c.config.namespace)
-	createdSecret, err := c.client.CoreV1().Secrets(c.config.namespace).Create(context, &secret, metav1.CreateOptions{})
+	createdSecret, err := c.client.CoreV1().Secrets(c.config.namespace).Create(context, &secret, metav1.CreateOptions{FieldManager: fieldManagerName})
 	if err != nil {
 		return nil, err
 	}
@@ -158,7 +160,7 @@ func (c kubernetesClient) applySecret(context context.Context, secretName string
 	})
 
 	log.Infof("(Dry Run) Applying secret %s in namespace %s", secretName, c.config.namespace)
-	appliedSecret, err := c.client.CoreV1().Secrets(c.config.namespace).Apply(context, secret, metav1.ApplyOptions{DryRun: []string{"All"}})
+	appliedSecret, err := c.client.CoreV1().Secrets(c.config.namespace).Apply(context, secret, metav1.ApplyOptions{DryRun: []string{"All"}, FieldManager: fieldManagerName})
 
 	if err != nil {
 		log.Errorf("(Dry run) Error applying secret: %v", err)
@@ -166,7 +168,7 @@ func (c kubernetesClient) applySecret(context context.Context, secretName string
 	}
 
 	log.Infof("Applying secret %s in namespace %s", secretName, c.config.namespace)
-	appliedSecret, err = c.client.CoreV1().Secrets(c.config.namespace).Apply(context, secret, metav1.ApplyOptions{})
+	appliedSecret, err = c.client.CoreV1().Secrets(c.config.namespace).Apply(context, secret, metav1.ApplyOptions{FieldManager: fieldManagerName})
 	if err != nil {
 		return nil, err
 	}
@@ -188,7 +190,7 @@ func (c kubernetesClient) createConfigMap(context context.Context, configName st
 	}
 
 	log.Infof("Creating config-map %s in namespace %s", configName, c.config.namespace)
-	createdConfigMap, err := c.client.CoreV1().ConfigMaps(c.config.namespace).Create(context, &configmap, metav1.CreateOptions{})
+	createdConfigMap, err := c.client.CoreV1().ConfigMaps(c.config.namespace).Create(context, &configmap, metav1.CreateOptions{FieldManager: fieldManagerName})
 	if err != nil {
 		return nil, err
 	}
@@ -205,7 +207,7 @@ func (c kubernetesClient) applyConfigMap(context context.Context, configName str
 	})
 
 	log.Infof("(Dry Run) Applying config-map %s in namespace %s", configName, c.config.namespace)
-	appliedConfigMap, err := c.client.CoreV1().ConfigMaps(c.config.namespace).Apply(context, configmap, metav1.ApplyOptions{DryRun: []string{"All"}})
+	appliedConfigMap, err := c.client.CoreV1().ConfigMaps(c.config.namespace).Apply(context, configmap, metav1.ApplyOptions{DryRun: []string{"All"}, FieldManager: fieldManagerName})
 
 	if err != nil {
 		log.Errorf("(Dry run) Error applying config-map: %v", err)
@@ -213,7 +215,7 @@ func (c kubernetesClient) applyConfigMap(context context.Context, configName str
 	}
 
 	log.Infof("Applying config-map %s in namespace %s", configName, c.config.namespace)
-	appliedConfigMap, err = c.client.CoreV1().ConfigMaps(c.config.namespace).Apply(context, configmap, metav1.ApplyOptions{})
+	appliedConfigMap, err = c.client.CoreV1().ConfigMaps(c.config.namespace).Apply(context, configmap, metav1.ApplyOptions{FieldManager: fieldManagerName})
 	if err != nil {
 		return nil, err
 	}
