@@ -16,7 +16,7 @@ const (
 	VaultSecretPath   = "VAULT_SECRET_PATH"
 	Kubeconfig        = "KUBECONFIG"
 	Namespace         = "KUBERNETES_NAMESPACE"
-	ApplyAsConfigmap  = "APPLY_AS_CONFIGMAP"
+	ApplyAsConfigmap  = "LOAD_AS_CONFIGMAP"
 	ObjectNameToApply = "OBJECT_NAME_TO_APPLY"
 )
 
