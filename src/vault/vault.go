@@ -7,19 +7,24 @@ import (
 )
 
 type VaultConfig struct {
-	Address    string
-	AuthToken  string
-	Namespace  string
-	EngineName string
-	SecretPath string
+	Address     string
+	AuthToken   string
+	Namespace   string
+	EngineName  string
+	SecretPath  string
+	AuthMethod  string
+	GithubToken string
 }
 
 func CheckVaultConfigRequiredFields(config VaultConfig) error {
 	if config.Address == "" {
 		return fmt.Errorf("address is required")
 	}
-	if config.AuthToken == "" {
+	if config.AuthMethod == "jwt" && config.AuthToken == "" {
 		return fmt.Errorf("authToken is required")
+	}
+	if config.AuthMethod == "github" && config.GithubToken == "" {
+		return fmt.Errorf("githubToken is required")
 	}
 	if config.EngineName == "" {
 		return fmt.Errorf("engineName is required")
@@ -94,6 +99,10 @@ func LoadSecretData(config VaultConfig, log *logrus.Logger) (map[string]string, 
 	return secretData, nil
 }
 
+func GetSecretPath(config VaultConfig) string {
+	return fmt.Sprintf("%s/data/%s", config.EngineName, config.SecretPath)
+}
+
 func vaultEngineExists(config VaultConfig, log *logrus.Logger, client *api.Client) bool {
 	mounts, err := client.Sys().ListMounts()
 
@@ -108,10 +117,6 @@ func vaultEngineExists(config VaultConfig, log *logrus.Logger, client *api.Clien
 	return true
 }
 
-func GetSecretPath(config VaultConfig) string {
-	return fmt.Sprintf("%s/data/%s", config.EngineName, config.SecretPath)
-}
-
 func newAuthenticatedVaultApiClient(config VaultConfig, log *logrus.Logger) (*api.Client, error) {
 	client, err := api.NewClient(&api.Config{
 		Address: config.Address,
@@ -123,7 +128,49 @@ func newAuthenticatedVaultApiClient(config VaultConfig, log *logrus.Logger) (*ap
 	}
 
 	client.SetNamespace(config.Namespace)
-	client.SetToken(config.AuthToken)
+
+	if config.AuthMethod == "github" {
+		client, err = authWithGithub(config.GithubToken, client)
+		if err != nil {
+			log.WithError(err).Error("Failed to authenticate with Github")
+			return nil, err
+		}
+	}
+	if config.AuthMethod == "jwt" {
+		client, err = authWithJwt(config.AuthToken, client)
+		if err != nil {
+			log.WithError(err).Error("Failed to authenticate with JWT")
+			return nil, err
+		}
+	}
+
+	return client, nil
+}
+
+func authWithJwt(token string, client *api.Client) (*api.Client, error) {
+	client.SetToken(token)
+	return client, nil
+}
+
+func authWithGithub(githubToken string, client *api.Client) (*api.Client, error) {
+	secret, err := client.Logical().Write("auth/github/login", map[string]interface{}{
+		"token": githubToken,
+	})
+
+	if err != nil {
+		return client, err
+	}
+	if secret == nil {
+		return client, nil
+	}
+	if secret.Auth == nil {
+		return client, fmt.Errorf("secret.Auth is nil")
+	}
+	if secret.Auth.ClientToken == "" {
+		return client, fmt.Errorf("secret.Auth.ClientToken is empty")
+	}
+
+	client.SetToken(secret.Auth.ClientToken)
 
 	return client, nil
 }
