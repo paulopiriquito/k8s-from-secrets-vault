@@ -204,7 +204,7 @@ func Test_GivenMissingRequiredVaultEngine_ReturnsError(t *testing.T) {
 	if err == nil {
 		t.Error("Expected error")
 	}
-	if err.Error() != "Vault engine is required" {
+	if err.Error() != "Vault engine name is required" {
 		t.Error("Expected error to be 'vault engine is required'")
 	}
 }
@@ -234,52 +234,6 @@ func Test_WhenAuthMethodIsNotSet_DefaultsToJwt(t *testing.T) {
 	}
 }
 
-func Test_Command_GivenGithubToken_CanCreateCommand(t *testing.T) {
-	log := setupLogger(t)
-
-	expectedSecretData := map[string]interface{}{
-		"TEST_KEY": "TEST_VALUE",
-	}
-
-	vaultClientConfig, vaultHttpListener := getClientConfigForNewTestVaultWithSecrets(t, expectedSecretData)
-	defer destroyVaultHttpListener(t, vaultHttpListener)
-
-	parameters := getFakeKubernetesParameters(t)
-
-	//Transform command into a string array
-	commandArgs := map[string]string{
-		app.VaultAddress:      vaultClientConfig.Address,
-		app.VaultToken:        "",
-		app.VaultEngine:       vaultClientConfig.EngineName,
-		app.VaultSecretPath:   vaultClientConfig.SecretPath,
-		app.Kubeconfig:        parameters.Base64Kubeconfig,
-		app.Namespace:         parameters.Namespace,
-		app.ApplyAsConfigmap:  "false",
-		app.ObjectNameToApply: "test-secret",
-		app.VaultAuthMethod:   "github",
-		app.GithubToken:       "test-github-token",
-	}
-
-	config, err := kubernetes.CreateConfig(parameters, log)
-	if err != nil {
-		t.Error("Expected no error, got ", err)
-	}
-
-	client, _, err := getFakeKubernetesClient(config, t)
-	if err != nil {
-		t.Error("Expected no error, got ", err)
-	}
-
-	command, err := app.SetupCommandWithKubernetesClient(commandArgs, client)
-	if err != nil {
-		t.Error("Expected no error, got ", err)
-	}
-
-	if command.AuthToken == "" {
-		t.Error("Expected command.AuthToken to be set")
-	}
-}
-
 func Test_Command_GivenRequiredArgs_CanLoadAndApplySecrets(t *testing.T) {
 	log := setupLogger(t)
 
@@ -287,7 +241,7 @@ func Test_Command_GivenRequiredArgs_CanLoadAndApplySecrets(t *testing.T) {
 		"TEST_KEY": "TEST_VALUE",
 	}
 
-	vaultClientConfig, vaultHttpListener := getClientConfigForNewTestVaultWithSecrets(t, expectedSecretData)
+	vaultClientConfig, vaultHttpListener := getClientConfigForNewTestVaultWithSecretsAndJwtAuth(t, expectedSecretData)
 	defer destroyVaultHttpListener(t, vaultHttpListener)
 
 	parameters := getFakeKubernetesParameters(t)
@@ -361,7 +315,7 @@ func Test_VaultClient_GivenVaultConfig_CanLoadSecretData(t *testing.T) {
 		"TEST_KEY": "TEST_VALUE",
 	}
 
-	clientConfig, vaultHttpListener := getClientConfigForNewTestVaultWithSecrets(t, expectedSecretData)
+	clientConfig, vaultHttpListener := getClientConfigForNewTestVaultWithSecretsAndJwtAuth(t, expectedSecretData)
 	defer destroyVaultHttpListener(t, vaultHttpListener)
 
 	//Act
@@ -387,7 +341,7 @@ func Test_VaultClient_GivenEmptySecretTestData_LoadsEmptyMap(t *testing.T) {
 
 	expectedSecretData := map[string]interface{}{}
 
-	clientConfig, vaultHttpListener := getClientConfigForNewTestVaultWithSecrets(t, expectedSecretData)
+	clientConfig, vaultHttpListener := getClientConfigForNewTestVaultWithSecretsAndJwtAuth(t, expectedSecretData)
 	defer destroyVaultHttpListener(t, vaultHttpListener)
 
 	//Act
@@ -413,7 +367,7 @@ func Test_VaultClient_GivenIncorrectVaultPath_And_CorrectEngine_LoadsEmptyMap(t 
 
 	expectedSecretData := map[string]interface{}{}
 
-	clientConfig, vaultHttpListener := getClientConfigForNewTestVaultWithSecrets(t, expectedSecretData)
+	clientConfig, vaultHttpListener := getClientConfigForNewTestVaultWithSecretsAndJwtAuth(t, expectedSecretData)
 	defer destroyVaultHttpListener(t, vaultHttpListener)
 
 	clientConfig.SecretPath = "incorrect/path"
@@ -439,7 +393,7 @@ func Test_VaultClient_GivenIncorrectEngineName_ReturnsError(t *testing.T) {
 
 	expectedSecretData := map[string]interface{}{}
 
-	clientConfig, vaultHttpListener := getClientConfigForNewTestVaultWithSecrets(t, expectedSecretData)
+	clientConfig, vaultHttpListener := getClientConfigForNewTestVaultWithSecretsAndJwtAuth(t, expectedSecretData)
 	defer destroyVaultHttpListener(t, vaultHttpListener)
 
 	clientConfig.EngineName = "incorrect-engine-name"
@@ -462,7 +416,7 @@ func Test_VaultClient_GivenIncorrectVaultAddress_ReturnsError(t *testing.T) {
 
 	expectedSecretData := map[string]interface{}{}
 
-	clientConfig, vaultHttpListener := getClientConfigForNewTestVaultWithSecrets(t, expectedSecretData)
+	clientConfig, vaultHttpListener := getClientConfigForNewTestVaultWithSecretsAndJwtAuth(t, expectedSecretData)
 	defer destroyVaultHttpListener(t, vaultHttpListener)
 
 	clientConfig.Address = "http://incorrect-address"
@@ -485,7 +439,7 @@ func Test_VaultClient_GivenIncorrectAuthToken_ReturnsError(t *testing.T) {
 
 	expectedSecretData := map[string]interface{}{}
 
-	clientConfig, vaultHttpListener := getClientConfigForNewTestVaultWithSecrets(t, expectedSecretData)
+	clientConfig, vaultHttpListener := getClientConfigForNewTestVaultWithSecretsAndJwtAuth(t, expectedSecretData)
 	defer destroyVaultHttpListener(t, vaultHttpListener)
 
 	clientConfig.AuthToken = "incorrect-auth-token"

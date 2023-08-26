@@ -10,15 +10,31 @@ import (
 	"testing"
 )
 
-func getClientConfigForNewTestVaultWithSecrets(t *testing.T, secretsToWrite map[string]interface{}) (vaultclient.VaultConfig, net.Listener) {
+func getClientConfigForNewTestVaultWithSecretsAndJwtAuth(t *testing.T, secretsToWrite map[string]interface{}) (vaultclient.VaultConfig, net.Listener) {
 	t.Helper()
+	testVaultConfig := getTestVaultConfigWithAuthMethod("jwt")
+	vaultHttpListener, clientConfig := getClientConfigWithSecrets(t, secretsToWrite, testVaultConfig)
+	return clientConfig, vaultHttpListener
+}
 
+func getClientConfigForNewTestVaultWithSecretsAndGithubAuth(t *testing.T, secretsToWrite map[string]interface{}) (vaultclient.VaultConfig, net.Listener) {
+	t.Helper()
+	testVaultConfig := getTestVaultConfigWithAuthMethod("github")
+	vaultHttpListener, clientConfig := getClientConfigWithSecrets(t, secretsToWrite, testVaultConfig)
+	return clientConfig, vaultHttpListener
+}
+
+func getTestVaultConfigWithAuthMethod(authMethod string) vaultclient.VaultConfig {
 	testVaultConfig := vaultclient.VaultConfig{
 		EngineName: "application",
 		SecretPath: "dev/config",
 		Namespace:  "",
+		AuthMethod: authMethod,
 	}
+	return testVaultConfig
+}
 
+func getClientConfigWithSecrets(t *testing.T, secretsToWrite map[string]interface{}, testVaultConfig vaultclient.VaultConfig) (net.Listener, vaultclient.VaultConfig) {
 	secretPath := vaultclient.GetSecretPath(testVaultConfig)
 
 	if secretsToWrite == nil {
@@ -32,14 +48,14 @@ func getClientConfigForNewTestVaultWithSecrets(t *testing.T, secretsToWrite map[
 	clientConfig.Namespace = testVaultConfig.Namespace
 	clientConfig.SecretPath = testVaultConfig.SecretPath
 	clientConfig.Address = testVaultAddress
+	clientConfig.AuthMethod = testVaultConfig.AuthMethod
 	clientConfig.AuthToken = testVaultRootToken
-
-	return clientConfig, vaultHttpListener
+	return vaultHttpListener, clientConfig
 }
 
 func createTestVaultWithSecrets(t *testing.T, vaultConfig vaultclient.VaultConfig, secretPath string, testSecrets map[string]interface{}) (net.Listener, string, string) {
 	t.Helper()
-	cluster := vault.NewTestCluster(t, &vault.CoreConfig{}, &vault.TestClusterOptions{})
+	cluster := vault.NewTestCluster(t, &vault.CoreConfig{}, &vault.TestClusterOptions{NumCores: 1})
 	rootToken := cluster.RootToken
 	vaultCore := cluster.Cores[0].Core
 
