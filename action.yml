@@ -9,9 +9,18 @@ inputs:
   vault-address:
     description: 'Hashicorp Vault address'
     required: true
+  vault-auth-method:
+    description: 'Hashicorp Vault authentication method (jwt, github)'
+    required: false
+    default: 'jwt'
+  github-token:
+    description: 'Github token'
+    required: false
+    default: ''
   vault-token:
     description: 'Hashicorp Vault token'
-    required: true
+    required: false
+    default: ''
   vault-namespace:
     description: 'Hashicorp Vault namespace'
     required: false
@@ -42,6 +51,8 @@ runs:
   image: 'docker://piriquito/k8s-from-secrets-vault:v1.0.0'
   env:
     VAULT_ADDRESS: ${{ inputs.vault-address }}
+    VAULT_AUTH_METHOD: ${{ inputs.vault-auth-method }}
+    GITHUB_TOKEN: ${{ inputs.github-token }}
     VAULT_TOKEN: ${{ inputs.vault-token }}
     VAULT_NAMESPACE: ${{ inputs.vault-namespace }}
     VAULT_ENGINE: ${{ inputs.vault-engine }}

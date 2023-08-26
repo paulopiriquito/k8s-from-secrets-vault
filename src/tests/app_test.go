@@ -10,6 +10,230 @@ import (
 	"testing"
 )
 
+func Test_GivenMissingRequiredObjectNameToApply_ReturnsError(t *testing.T) {
+	//Arrange
+	commandArgs := map[string]string{
+		app.VaultAddress:     "http://",
+		app.VaultToken:       "test-token",
+		app.VaultEngine:      "test-engine",
+		app.VaultSecretPath:  "test-path",
+		app.Namespace:        "test-namespace",
+		app.ApplyAsConfigmap: "false",
+		app.Kubeconfig:       "test-kubeconfig",
+		app.VaultAuthMethod:  "jwt",
+	}
+
+	//Act
+	_, err := app.SetupCommandWithKubernetesClient(commandArgs, nil)
+
+	//Assert
+	if err == nil {
+		t.Error("Expected error")
+	}
+	if err.Error() != "Kubernetes object name to apply is required" {
+		t.Error("Expected error to be 'kubernetes object name to apply is required'")
+	}
+}
+
+func Test_GivenMissingRequiredNamespace_ReturnsError(t *testing.T) {
+	//Arrange
+	commandArgs := map[string]string{
+		app.VaultAddress:      "http://",
+		app.VaultToken:        "test-token",
+		app.VaultEngine:       "test-engine",
+		app.VaultSecretPath:   "test-path",
+		app.ApplyAsConfigmap:  "false",
+		app.Kubeconfig:        "test-kubeconfig",
+		app.ObjectNameToApply: "test-secret",
+	}
+
+	//Act
+	_, err := app.SetupCommandWithKubernetesClient(commandArgs, nil)
+
+	//Assert
+	if err == nil {
+		t.Error("Expected error")
+	}
+	if err.Error() != "Kubernetes namespace is required" {
+		t.Error("Expected error to be 'kubernetes namespace is required'")
+	}
+}
+
+func Test_WhenAuthMethodIsGithub_GivenMissingRequiredGithubToken_ReturnsError(t *testing.T) {
+	//Arrange
+	commandArgs := map[string]string{
+		app.VaultAddress:      "http://",
+		app.VaultAuthMethod:   "github",
+		app.VaultEngine:       "test-engine",
+		app.VaultSecretPath:   "test-path",
+		app.Namespace:         "test-namespace",
+		app.ApplyAsConfigmap:  "false",
+		app.Kubeconfig:        "test-kubeconfig",
+		app.ObjectNameToApply: "test-secret",
+	}
+
+	//Act
+	_, err := app.SetupCommandWithKubernetesClient(commandArgs, nil)
+
+	//Assert
+	if err == nil {
+		t.Error("Expected error")
+	}
+	if err.Error() != "Github token is required" {
+		t.Error("Expected error to be 'github token is required'")
+	}
+}
+
+func Test_GivenMissingRequiredVaultSecretPath_ReturnsError(t *testing.T) {
+	//Arrange
+	commandArgs := map[string]string{
+		app.VaultAddress:      "http://",
+		app.VaultAuthMethod:   "jwt",
+		app.VaultToken:        "test-token",
+		app.VaultEngine:       "test-engine",
+		app.Namespace:         "test-namespace",
+		app.ApplyAsConfigmap:  "false",
+		app.Kubeconfig:        "test-kubeconfig",
+		app.ObjectNameToApply: "test-secret",
+	}
+
+	//Act
+	_, err := app.SetupCommandWithKubernetesClient(commandArgs, nil)
+
+	//Assert
+	if err == nil {
+		t.Error("Expected error")
+	}
+	if err.Error() != "Vault secret path is required" {
+		t.Error("Expected error to be 'vault secret path is required'")
+	}
+}
+
+func Test_GivenMissingRequiredVaultToken_WhenAuthMethodJwt_ReturnsError(t *testing.T) {
+	//Arrange
+	commandArgs := map[string]string{
+		app.VaultAddress:      "http://",
+		app.VaultEngine:       "test-engine",
+		app.VaultSecretPath:   "test-path",
+		app.Namespace:         "test-namespace",
+		app.ApplyAsConfigmap:  "false",
+		app.Kubeconfig:        "test-kubeconfig",
+		app.VaultAuthMethod:   "jwt",
+		app.ObjectNameToApply: "test-secret",
+	}
+
+	//Act
+	_, err := app.SetupCommandWithKubernetesClient(commandArgs, nil)
+
+	//Assert
+	if err == nil {
+		t.Error("Expected error")
+	}
+	if err.Error() != "Vault token is required" {
+		t.Error("Expected error to be 'vault token is required'")
+	}
+}
+
+func Test_GivenMissingRequiredVaultAddress_ReturnsError(t *testing.T) {
+	//Arrange
+	commandArgs := map[string]string{
+		app.VaultAuthMethod:   "jwt",
+		app.VaultToken:        "test-token",
+		app.VaultEngine:       "test-engine",
+		app.VaultSecretPath:   "test-path",
+		app.Namespace:         "test-namespace",
+		app.ApplyAsConfigmap:  "false",
+		app.Kubeconfig:        "test-kubeconfig",
+		app.ObjectNameToApply: "test-secret",
+	}
+
+	//Act
+	_, err := app.SetupCommandWithKubernetesClient(commandArgs, nil)
+
+	//Assert
+	if err == nil {
+		t.Error("Expected error")
+	}
+	if err.Error() != "Vault address is required" {
+		t.Error("Expected error to be 'vault address is required'")
+	}
+}
+
+func Test_GivenMissingRequiredKubeconfig_ReturnsError(t *testing.T) {
+	//Arrange
+	commandArgs := map[string]string{
+		app.VaultAddress:      "http://",
+		app.VaultAuthMethod:   "jwt",
+		app.VaultToken:        "test-token",
+		app.VaultEngine:       "test-engine",
+		app.VaultSecretPath:   "test-path",
+		app.Namespace:         "test-namespace",
+		app.ApplyAsConfigmap:  "false",
+		app.ObjectNameToApply: "test-secret",
+	}
+
+	//Act
+	_, err := app.SetupCommandWithKubernetesClient(commandArgs, nil)
+
+	//Assert
+	if err == nil {
+		t.Error("Expected error")
+	}
+	if err.Error() != "Kubeconfig is required" {
+		t.Error("Expected error to be 'kubeconfig is required'")
+	}
+}
+
+func Test_GivenMissingRequiredVaultEngine_ReturnsError(t *testing.T) {
+	//Arrange missing vault engine
+	commandArgs := map[string]string{
+		app.Kubeconfig:        "test-kubeconfig",
+		app.Namespace:         "test-namespace",
+		app.ApplyAsConfigmap:  "false",
+		app.ObjectNameToApply: "test-secret",
+		app.VaultAddress:      "http://",
+		app.VaultSecretPath:   "test-path",
+		app.VaultAuthMethod:   "jwt",
+		app.VaultToken:        "test-token",
+	}
+
+	//Act
+	_, err := app.SetupCommandWithKubernetesClient(commandArgs, nil)
+
+	//Assert
+	if err == nil {
+		t.Error("Expected error")
+	}
+	if err.Error() != "Vault engine name is required" {
+		t.Error("Expected error to be 'vault engine is required'")
+	}
+}
+
+func Test_WhenAuthMethodIsNotSet_DefaultsToJwt(t *testing.T) {
+	//Arrange
+	commandArgs := map[string]string{
+		app.VaultAddress:      "http://",
+		app.VaultToken:        "test-token",
+		app.VaultEngine:       "test-engine",
+		app.VaultSecretPath:   "test-path",
+		app.Namespace:         "test-namespace",
+		app.ApplyAsConfigmap:  "false",
+		app.Kubeconfig:        "test-kubeconfig",
+		app.ObjectNameToApply: "test-secret",
+	}
+
+	//Act
+	command, err := app.SetupCommandWithKubernetesClient(commandArgs, nil)
+
+	//Assert
+	if err != nil {
+		t.Error("Expected no error")
+	}
+	if command.AuthToken != "test-token" {
+		t.Error("Expected command.AuthToken to be 'test-token'")
+	}
+}
+
 func Test_Command_GivenRequiredArgs_CanLoadAndApplySecrets(t *testing.T) {
 	log := setupLogger(t)
 
@@ -17,7 +241,7 @@ func Test_Command_GivenRequiredArgs_CanLoadAndApplySecrets(t *testing.T) {
 		"TEST_KEY": "TEST_VALUE",
 	}
 
-	vaultClientConfig, vaultHttpListener := getClientConfigForNewTestVaultWithSecrets(t, expectedSecretData)
+	vaultClientConfig, vaultHttpListener := getClientConfigForNewTestVaultWithSecretsAndJwtAuth(t, expectedSecretData)
 	defer destroyVaultHttpListener(t, vaultHttpListener)
 
 	parameters := getFakeKubernetesParameters(t)
@@ -30,6 +254,7 @@ func Test_Command_GivenRequiredArgs_CanLoadAndApplySecrets(t *testing.T) {
 		app.VaultSecretPath:   vaultClientConfig.SecretPath,
 		app.Kubeconfig:        parameters.Base64Kubeconfig,
 		app.Namespace:         parameters.Namespace,
+		app.VaultAuthMethod:   "jwt",
 		app.ApplyAsConfigmap:  "false",
 		app.ObjectNameToApply: "test-secret",
 	}
@@ -44,7 +269,10 @@ func Test_Command_GivenRequiredArgs_CanLoadAndApplySecrets(t *testing.T) {
 		t.Error("Expected no error, got ", err)
 	}
 
-	command := app.SetupCommandWithKubernetesClient(commandArgs, client)
+	command, err := app.SetupCommandWithKubernetesClient(commandArgs, client)
+	if err != nil {
+		t.Error("Expected no error, got ", err)
+	}
 	err = command.Execute()
 	if err != nil {
 		t.Error("Expected no error, got ", err)
@@ -87,7 +315,7 @@ func Test_VaultClient_GivenVaultConfig_CanLoadSecretData(t *testing.T) {
 		"TEST_KEY": "TEST_VALUE",
 	}
 
-	clientConfig, vaultHttpListener := getClientConfigForNewTestVaultWithSecrets(t, expectedSecretData)
+	clientConfig, vaultHttpListener := getClientConfigForNewTestVaultWithSecretsAndJwtAuth(t, expectedSecretData)
 	defer destroyVaultHttpListener(t, vaultHttpListener)
 
 	//Act
@@ -113,7 +341,7 @@ func Test_VaultClient_GivenEmptySecretTestData_LoadsEmptyMap(t *testing.T) {
 
 	expectedSecretData := map[string]interface{}{}
 
-	clientConfig, vaultHttpListener := getClientConfigForNewTestVaultWithSecrets(t, expectedSecretData)
+	clientConfig, vaultHttpListener := getClientConfigForNewTestVaultWithSecretsAndJwtAuth(t, expectedSecretData)
 	defer destroyVaultHttpListener(t, vaultHttpListener)
 
 	//Act
@@ -139,7 +367,7 @@ func Test_VaultClient_GivenIncorrectVaultPath_And_CorrectEngine_LoadsEmptyMap(t 
 
 	expectedSecretData := map[string]interface{}{}
 
-	clientConfig, vaultHttpListener := getClientConfigForNewTestVaultWithSecrets(t, expectedSecretData)
+	clientConfig, vaultHttpListener := getClientConfigForNewTestVaultWithSecretsAndJwtAuth(t, expectedSecretData)
 	defer destroyVaultHttpListener(t, vaultHttpListener)
 
 	clientConfig.SecretPath = "incorrect/path"
@@ -165,7 +393,7 @@ func Test_VaultClient_GivenIncorrectEngineName_ReturnsError(t *testing.T) {
 
 	expectedSecretData := map[string]interface{}{}
 
-	clientConfig, vaultHttpListener := getClientConfigForNewTestVaultWithSecrets(t, expectedSecretData)
+	clientConfig, vaultHttpListener := getClientConfigForNewTestVaultWithSecretsAndJwtAuth(t, expectedSecretData)
 	defer destroyVaultHttpListener(t, vaultHttpListener)
 
 	clientConfig.EngineName = "incorrect-engine-name"
@@ -188,7 +416,7 @@ func Test_VaultClient_GivenIncorrectVaultAddress_ReturnsError(t *testing.T) {
 
 	expectedSecretData := map[string]interface{}{}
 
-	clientConfig, vaultHttpListener := getClientConfigForNewTestVaultWithSecrets(t, expectedSecretData)
+	clientConfig, vaultHttpListener := getClientConfigForNewTestVaultWithSecretsAndJwtAuth(t, expectedSecretData)
 	defer destroyVaultHttpListener(t, vaultHttpListener)
 
 	clientConfig.Address = "http://incorrect-address"
@@ -211,7 +439,7 @@ func Test_VaultClient_GivenIncorrectAuthToken_ReturnsError(t *testing.T) {
 
 	expectedSecretData := map[string]interface{}{}
 
-	clientConfig, vaultHttpListener := getClientConfigForNewTestVaultWithSecrets(t, expectedSecretData)
+	clientConfig, vaultHttpListener := getClientConfigForNewTestVaultWithSecretsAndJwtAuth(t, expectedSecretData)
 	defer destroyVaultHttpListener(t, vaultHttpListener)
 
 	clientConfig.AuthToken = "incorrect-auth-token"

@@ -6,8 +6,13 @@ import (
 )
 
 func main() {
-	command := app.SetupCommand()
-	err := command.Execute()
+	command, err := app.SetupCommand()
+	if err != nil {
+		os.Exit(1)
+		return
+	}
+
+	err = command.Execute()
 	if err != nil {
 		os.Exit(1)
 		return
