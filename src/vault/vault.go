@@ -22,7 +22,7 @@ func CheckVaultConfigRequiredFields(config VaultConfig) error {
 	if config.Address == "" {
 		return fmt.Errorf("address is required")
 	}
-	if config.AuthMethod == "jwt" && config.AuthToken == "" {
+	if config.AuthMethod == "token" && config.AuthToken == "" {
 		return fmt.Errorf("authToken is required")
 	}
 	if config.AuthMethod == "github" && config.GithubToken == "" {
@@ -145,10 +145,10 @@ func newAuthenticatedVaultApiClient(config VaultConfig, log *logrus.Logger) (*ap
 			return nil, err
 		}
 	}
-	if config.AuthMethod == "jwt" {
-		client, err = authWithJwt(config.AuthToken, client)
+	if config.AuthMethod == "token" {
+		client, err = authWithToken(config.AuthToken, client)
 		if err != nil {
-			log.WithError(err).Error("Failed to authenticate with JWT")
+			log.WithError(err).Error("Failed to authenticate with token")
 			return nil, err
 		}
 	}
@@ -180,7 +180,7 @@ func authWithAppRole(roleId string, secretId string, client *api.Client) (*api.C
 	return client, nil
 }
 
-func authWithJwt(token string, client *api.Client) (*api.Client, error) {
+func authWithToken(token string, client *api.Client) (*api.Client, error) {
 	client.SetToken(token)
 	return client, nil
 }

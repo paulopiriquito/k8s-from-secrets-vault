@@ -65,7 +65,7 @@ func SetupCommand() (*Command, error) {
 	}
 
 	if command.AuthMethod == "" {
-		command.AuthMethod = "jwt"
+		command.AuthMethod = "token"
 	}
 
 	err := command.Validate()
@@ -206,7 +206,7 @@ func (command Command) Validate() error {
 	if command.AuthMethod == "github" && command.GithubToken == "" {
 		return NewError("Github token is required")
 	}
-	if command.AuthMethod == "jwt" && command.AuthToken == "" {
+	if command.AuthMethod == "token" && command.AuthToken == "" {
 		return NewError("Vault token is required")
 	}
 

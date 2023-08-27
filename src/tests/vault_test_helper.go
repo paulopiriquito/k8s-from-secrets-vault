@@ -10,9 +10,9 @@ import (
 	"testing"
 )
 
-func getClientConfigForNewTestVaultWithSecretsAndJwtAuth(t *testing.T, secretsToWrite map[string]interface{}) (vaultclient.VaultConfig, net.Listener) {
+func getClientConfigForNewTestVaultWithSecretsAndTokenAuth(t *testing.T, secretsToWrite map[string]interface{}) (vaultclient.VaultConfig, net.Listener) {
 	t.Helper()
-	testVaultConfig := getTestVaultConfigWithAuthMethod("jwt")
+	testVaultConfig := getTestVaultConfigWithAuthMethod("token")
 	vaultHttpListener, clientConfig := getClientConfigWithSecrets(t, secretsToWrite, testVaultConfig)
 	return clientConfig, vaultHttpListener
 }
