@@ -10,27 +10,31 @@ import (
 )
 
 const (
-	VaultAddress      = "VAULT_ADDRESS"
-	VaultAuthMethod   = "VAULT_AUTH_METHOD"
-	GithubToken       = "GITHUB_TOKEN"
-	VaultToken        = "VAULT_TOKEN"
-	VaultNamespace    = "VAULT_NAMESPACE"
-	VaultEngine       = "VAULT_ENGINE"
-	VaultSecretPath   = "VAULT_SECRET_PATH"
-	Kubeconfig        = "KUBECONFIG"
-	Namespace         = "KUBERNETES_NAMESPACE"
-	ApplyAsConfigmap  = "LOAD_AS_CONFIGMAP"
-	ObjectNameToApply = "OBJECT_NAME_TO_APPLY"
+	VaultAddress         = "VAULT_ADDRESS"
+	VaultAuthMethod      = "VAULT_AUTH_METHOD"
+	GithubToken          = "GITHUB_TOKEN"
+	VaultAppRoleId       = "VAULT_APPROLE_ID"
+	VaultAppRoleSecretId = "VAULT_APPROLE_SECRET_ID"
+	VaultToken           = "VAULT_TOKEN"
+	VaultNamespace       = "VAULT_NAMESPACE"
+	VaultEngine          = "VAULT_ENGINE"
+	VaultSecretPath      = "VAULT_SECRET_PATH"
+	Kubeconfig           = "KUBECONFIG"
+	Namespace            = "KUBERNETES_NAMESPACE"
+	ApplyAsConfigmap     = "LOAD_AS_CONFIGMAP"
+	ObjectNameToApply    = "OBJECT_NAME_TO_APPLY"
 )
 
 type Command struct {
-	Address        string
-	AuthToken      string
-	AuthMethod     string
-	GithubToken    string
-	VaultNamespace string
-	EngineName     string
-	SecretPath     string
+	Address         string
+	AuthToken       string
+	AuthMethod      string
+	AppRoleId       string
+	AppRoleSecretId string
+	GithubToken     string
+	VaultNamespace  string
+	EngineName      string
+	SecretPath      string
 
 	Base64Kubeconfig string
 	Namespace        string
@@ -48,6 +52,8 @@ func SetupCommand() (*Command, error) {
 		Address:           os.Getenv(VaultAddress),
 		AuthToken:         os.Getenv(VaultToken),
 		AuthMethod:        os.Getenv(VaultAuthMethod),
+		AppRoleId:         os.Getenv(VaultAppRoleId),
+		AppRoleSecretId:   os.Getenv(VaultAppRoleSecretId),
 		GithubToken:       os.Getenv(GithubToken),
 		VaultNamespace:    os.Getenv(VaultNamespace),
 		EngineName:        os.Getenv(VaultEngine),
@@ -83,6 +89,8 @@ func SetupCommandWithKubernetesClient(args map[string]string, kubernetesClient k
 	_ = os.Setenv(Namespace, args[Namespace])
 	_ = os.Setenv(ApplyAsConfigmap, args[ApplyAsConfigmap])
 	_ = os.Setenv(ObjectNameToApply, args[ObjectNameToApply])
+	_ = os.Setenv(VaultAppRoleId, args[VaultAppRoleId])
+	_ = os.Setenv(VaultAppRoleSecretId, args[VaultAppRoleSecretId])
 
 	command, err := SetupCommand()
 	if err != nil {
@@ -105,6 +113,8 @@ func (command Command) vaultParameters() vault.VaultConfig {
 		Address:     command.Address,
 		AuthMethod:  command.AuthMethod,
 		GithubToken: command.GithubToken,
+		AppRoleId:   command.AppRoleId,
+		SecretId:    command.AppRoleSecretId,
 		AuthToken:   command.AuthToken,
 		Namespace:   command.VaultNamespace,
 		EngineName:  command.EngineName,
@@ -190,6 +200,9 @@ func (command Command) Validate() error {
 		return NewError("Vault secret path is required")
 	}
 
+	if command.AuthMethod == "approle" && (command.AppRoleId == "" || command.AppRoleSecretId == "") {
+		return NewError("Vault RoleId and SecretId are required")
+	}
 	if command.AuthMethod == "github" && command.GithubToken == "" {
 		return NewError("Github token is required")
 	}
