@@ -12,7 +12,7 @@ inputs:
   vault-auth-method:
     description: 'Hashicorp Vault authentication method (jwt, github)'
     required: false
-    default: 'jwt'
+    default: 'token'
   github-token:
     description: 'Github token'
     required: false
