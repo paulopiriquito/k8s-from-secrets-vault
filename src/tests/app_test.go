@@ -84,6 +84,33 @@ func Test_WhenAuthMethodIsGithub_GivenMissingRequiredGithubToken_ReturnsError(t 
 	}
 }
 
+func Test_WhenAuthMethodAppRole_GivenMissingRequiredAppRoleAndSecretId_ReturnsError(t *testing.T) {
+	//Arrange
+	commandArgs := map[string]string{
+		app.VaultAddress:         "http://",
+		app.VaultEngine:          "test-engine",
+		app.VaultSecretPath:      "test-path",
+		app.Namespace:            "test-namespace",
+		app.ApplyAsConfigmap:     "false",
+		app.Kubeconfig:           "test-kubeconfig",
+		app.ObjectNameToApply:    "test-secret",
+		app.VaultAuthMethod:      "approle",
+		app.VaultAppRoleId:       "",
+		app.VaultAppRoleSecretId: "",
+	}
+
+	//Act
+	_, err := app.SetupCommandWithKubernetesClient(commandArgs, nil)
+
+	//Assert
+	if err == nil {
+		t.Error("Expected error")
+	}
+	if err.Error() != "Vault RoleId and SecretId are required" {
+		t.Error("Expected error to be 'vault RoleId and SecretId are required'")
+	}
+}
+
 func Test_GivenMissingRequiredVaultSecretPath_ReturnsError(t *testing.T) {
 	//Arrange
 	commandArgs := map[string]string{

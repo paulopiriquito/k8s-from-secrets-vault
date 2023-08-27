@@ -17,6 +17,14 @@ inputs:
     description: 'Github token'
     required: false
     default: ''
+  vault-approle-id:
+    description: 'Hashicorp Vault AppRole ID'
+    required: false
+    default: ''
+  vault-approle-secret-id:
+    description: 'Hashicorp Vault AppRole Secret ID'
+    required: false
+    default: ''
   vault-token:
     description: 'Hashicorp Vault token'
     required: false

@@ -14,6 +14,8 @@ type VaultConfig struct {
 	SecretPath  string
 	AuthMethod  string
 	GithubToken string
+	AppRoleId   string
+	SecretId    string
 }
 
 func CheckVaultConfigRequiredFields(config VaultConfig) error {
@@ -129,6 +131,13 @@ func newAuthenticatedVaultApiClient(config VaultConfig, log *logrus.Logger) (*ap
 
 	client.SetNamespace(config.Namespace)
 
+	if config.AuthMethod == "approle" {
+		client, err = authWithAppRole(config.AppRoleId, config.SecretId, client)
+		if err != nil {
+			log.WithError(err).Error("Failed to authenticate with AppRole")
+			return nil, err
+		}
+	}
 	if config.AuthMethod == "github" {
 		client, err = authWithGithub(config.GithubToken, client)
 		if err != nil {
@@ -143,6 +152,30 @@ func newAuthenticatedVaultApiClient(config VaultConfig, log *logrus.Logger) (*ap
 			return nil, err
 		}
 	}
+
+	return client, nil
+}
+
+func authWithAppRole(roleId string, secretId string, client *api.Client) (*api.Client, error) {
+	secret, err := client.Logical().Write("auth/approle/login", map[string]interface{}{
+		"role_id":   roleId,
+		"secret_id": secretId,
+	})
+
+	if err != nil {
+		return client, err
+	}
+	if secret == nil {
+		return client, nil
+	}
+	if secret.Auth == nil {
+		return client, fmt.Errorf("secret.Auth is nil")
+	}
+	if secret.Auth.ClientToken == "" {
+		return client, fmt.Errorf("secret.Auth.ClientToken is empty")
+	}
+
+	client.SetToken(secret.Auth.ClientToken)
 
 	return client, nil
 }

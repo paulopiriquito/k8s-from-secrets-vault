@@ -17,6 +17,14 @@ inputs:
     description: 'Github token'
     required: false
     default: ''
+  vault-approle-id:
+    description: 'Hashicorp Vault AppRole ID'
+    required: false
+    default: ''
+  vault-approle-secret-id:
+    description: 'Hashicorp Vault AppRole Secret ID'
+    required: false
+    default: ''
   vault-token:
     description: 'Hashicorp Vault token'
     required: false
@@ -53,6 +61,8 @@ runs:
     VAULT_ADDRESS: ${{ inputs.vault-address }}
     VAULT_AUTH_METHOD: ${{ inputs.vault-auth-method }}
     GITHUB_TOKEN: ${{ inputs.github-token }}
+    VAULT_APPROLE_ID: ${{ inputs.vault-approle-id }}
+    VAULT_APPROLE_SECRET_ID: ${{ inputs.vault-approle-secret-id }}
     VAULT_TOKEN: ${{ inputs.vault-token }}
     VAULT_NAMESPACE: ${{ inputs.vault-namespace }}
     VAULT_ENGINE: ${{ inputs.vault-engine }}
