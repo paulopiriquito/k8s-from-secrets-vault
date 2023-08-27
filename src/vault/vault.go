@@ -157,7 +157,7 @@ func newAuthenticatedVaultApiClient(config VaultConfig, log *logrus.Logger) (*ap
 }
 
 func authWithAppRole(roleId string, secretId string, client *api.Client) (*api.Client, error) {
-	secret, err := client.Logical().Write(fmt.Sprintf("%s/auth/approle/login", client.Namespace()), map[string]interface{}{
+	secret, err := client.Logical().Write("/auth/approle/login", map[string]interface{}{
 		"role_id":   roleId,
 		"secret_id": secretId,
 	})
@@ -186,7 +186,7 @@ func authWithToken(token string, client *api.Client) (*api.Client, error) {
 }
 
 func authWithGithub(githubToken string, client *api.Client) (*api.Client, error) {
-	secret, err := client.Logical().Write(fmt.Sprintf("%s/auth/github/login", client.Namespace()), map[string]interface{}{
+	secret, err := client.Logical().Write("/auth/github/login", map[string]interface{}{
 		"token": githubToken,
 	})
 
