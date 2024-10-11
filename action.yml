@@ -56,7 +56,7 @@ inputs:
 
 runs:
   using: 'docker'
-  image: 'ghcr.io://paulopiriquito/k8s-from-secrets-vault:v1.1.0-beta'
+  image: 'docker://ghcr.io/paulopiriquito/k8s-from-secrets-vault:v1.1.0-beta'
   env:
     VAULT_ADDRESS: ${{ inputs.vault-address }}
     VAULT_AUTH_METHOD: ${{ inputs.vault-auth-method }}
